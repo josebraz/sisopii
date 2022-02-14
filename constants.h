@@ -1,0 +1,7 @@
+#ifndef CONSTANTS_H
+#define CONSTANTS_H
+
+#define SERVER_PORT 8080
+#define PAYLOAD_MAX_SIZE 1024
+
+#endif
