@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "cstdlib": "cpp",
+        "in.h": "c"
+    },
+    "files.exclude": {
+        "*.o": true
+    }
+}
