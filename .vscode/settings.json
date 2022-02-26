@@ -1,7 +1,12 @@
 {
     "files.associations": {
         "cstdlib": "cpp",
-        "in.h": "c"
+        "in.h": "c",
+        "*.tcc": "cpp",
+        "string": "cpp",
+        "iostream": "cpp",
+        "ostream": "cpp",
+        "new": "cpp"
     },
     "files.exclude": {
         "*.o": true

@@ -1,4 +1,13 @@
+#ifndef TYPES_H
+#define TYPES_H
+
+#include <vector>
+#include <string>
+
 #include "stdint.h"
+#include "constants.h"
+
+using namespace std;
 
 typedef struct __packet
 {
@@ -17,3 +26,11 @@ typedef struct __notification
     uint16_t pending;    //Quantidade de leitores pendentes
     const char *_string; //Mensagem
 } notification;
+
+typedef struct __user
+{
+    string username;
+    vector<string>* follows;
+} user;
+
+#endif

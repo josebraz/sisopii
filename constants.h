@@ -3,5 +3,7 @@
 
 #define SERVER_PORT 8080
 #define PAYLOAD_MAX_SIZE 1024
+#define USERNAME_MAX_SIZE 20
+#define MAX_FOLLOWS 50
 
 #endif

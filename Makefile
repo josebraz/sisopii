@@ -1,10 +1,10 @@
 all: server client
 
 server: server.obj
-	gcc -o build/server server.o logs.o -lpthread
+	g++ -o build/server server.o logs.o persistence.o -lpthread
 	
-server.obj: server.c logs.c
-	gcc -c server.c logs.c
+server.obj: server.cpp logs.c persistence.cpp
+	g++ -c server.cpp logs.c persistence.cpp
 	
 client: client.obj
 	gcc -o build/client client.o logs.o -lpthread
