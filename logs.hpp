@@ -18,8 +18,8 @@ static const char *LOG_LEVEL_STRING[] = {
 
 static LOG_LEVEL _currentLevel = DEBUG;
 
-void log_debug(char* message);
+void log_debug(const char* message);
 
-void log_error(char* message);
+void log_error(const char* message);
 
 #endif

@@ -26,7 +26,7 @@ int read_users(user_p *users[])
     #ifndef TEST  
     fp = fopen("db/users.bin", "rb");
     #else
-    fp = fopen("tests/temp/test_users.bin", "rb");
+    fp = fopen("tests/temp/users.bin", "rb");
     #endif
 
     if (fp == NULL)
@@ -69,7 +69,7 @@ void write_users(const user_p users[], const int total)
     #ifndef TEST  
     fp = fopen("db/users.bin", "wb");
     #else
-    fp = fopen("tests/temp/test_users.bin", "wb");
+    fp = fopen("tests/temp/users.bin", "wb");
     #endif
 
     if (fp == NULL)

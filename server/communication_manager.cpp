@@ -13,14 +13,16 @@
 
 #include "../constants.h"
 #include "../types.hpp"
+#include "../logs.hpp"
 #include "persistence.hpp"
+#include "communication_manager.hpp"
 
 using namespace std;
 
+int sockfd;
+
 void start_server()
 {
-    int sockfd;
-    char buffer[PAYLOAD_MAX_SIZE];
     struct sockaddr_in servaddr, cliaddr;
 
     if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
@@ -45,25 +47,48 @@ void start_server()
         exit(EXIT_FAILURE);
     }
 
+    pthread_t receiver_thread;
+    pthread_create(&receiver_thread, NULL, message_receiver, NULL);
+}
+
+void *message_receiver(void *arg) {
+    struct sockaddr_in cliaddr;
+    char buffer[PAYLOAD_MAX_SIZE];
     int len, n;
     while (true)
     {
         n = recvfrom(
             sockfd,
-            (char *)buffer,
+            (char *) buffer,
             PAYLOAD_MAX_SIZE,
             MSG_WAITALL,
-            (struct sockaddr *)&cliaddr,
-            (socklen_t *)&len);
+            (struct sockaddr *) &cliaddr,
+            (socklen_t *) &len);
         buffer[n] = '\0';
         printf("Client : %s\n", buffer);
     }
 }
 
-int main()
-{
+void send_message(char *message, const struct sockaddr *cliaddr) {
+    int message_size = strlen(message);
 
-    start_server();
+    if (message_size > PAYLOAD_MAX_SIZE)
+    {
+        log_error("A mensagem para o servidor é muito grande");
+    }
+    else
+    {
+        ssize_t size = sendto(
+            sockfd,
+            (const char *)message,
+            message_size,
+            MSG_CONFIRM,
+            cliaddr,
+            sizeof(cliaddr));
 
-    return 0;
+        if (size == -1)
+        {
+            log_error("Mensagem não enviada");
+        }
+    }
 }

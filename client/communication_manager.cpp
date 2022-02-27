@@ -8,15 +8,12 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
+#include "communication_manager.hpp"
 #include "../constants.h"
-#include "../logs.h"
+#include "../logs.hpp"
 
 struct sockaddr_in servaddr;
 int sockfd;
-
-void *message_receiver(void *arg);
-
-void send_message(char *message);
 
 void start_client()
 {
@@ -49,7 +46,7 @@ void *message_receiver(void *arg)
             PAYLOAD_MAX_SIZE,
             MSG_WAITALL,
             (struct sockaddr *)&servaddr,
-            &len);
+            (socklen_t *) &len);
         buffer[n] = '\0';
         printf("Server : %s\n", buffer);
     }
@@ -80,20 +77,4 @@ void send_message(char *message)
             log_error("Mensagem não enviada");
         }
     }
-}
-
-int main()
-{
-    start_client();
-
-    char user_input[PAYLOAD_MAX_SIZE];
-
-    while (strcmp(user_input, "") != 0)
-    {
-        printf("Digite um comando: ");
-        scanf("%s", user_input);
-        send_message(user_input);
-    }
-
-    return 0;
 }

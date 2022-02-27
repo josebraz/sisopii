@@ -1,23 +1,23 @@
 all: server client
 
 server: server.obj
-	g++ -o build/server server.o logs.o persistence.o -lpthread
+	g++ -o build/server main.o logs.o persistence.o communication_manager.o notification_manager.o -lpthread
 	
-server.obj: server/server.cpp logs.c server/persistence.cpp
-	g++ -c server/server.cpp logs.c server/persistence.cpp
+server.obj: server/main.cpp logs.cpp server/persistence.cpp server/communication_manager.cpp server/notification_manager.cpp
+	g++ -c server/main.cpp logs.cpp server/persistence.cpp server/communication_manager.cpp server/notification_manager.cpp
 	
 client: client.obj
-	gcc -o build/client client.o logs.o -lpthread
+	g++ -o build/client main.o communication_manager.o notification_manager.o presentation.o logs.o -lpthread
 	
-client.obj: client/client.c logs.c
-	gcc -c client/client.c logs.c
+client.obj: client/main.cpp client/communication_manager.cpp client/presentation.cpp client/notification_manager.cpp logs.cpp
+	g++ -c client/main.cpp client/communication_manager.cpp client/presentation.cpp client/notification_manager.cpp logs.cpp
 
 tests: tests.obj
 	g++ -o build/tests test.o logs.o persistence.o -lpthread
 
 tests.obj:
-	g++ -c tests/test.cpp logs.c server/persistence.cpp -DTEST 
+	g++ -c tests/test.cpp logs.cpp server/persistence.cpp -DTEST 
 	
 clean: 
-	rm -f server.o client.o logs.o test.o build/server build/client
+	rm -f server.o client.o logs.o test.o persistence.o build/* /tests/temp/*.bin
 	
