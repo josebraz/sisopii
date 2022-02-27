@@ -5,7 +5,7 @@
 #include <iostream>
 #include <string>
 
-#include "types.hpp"
+#include "../types.hpp"
 #include "persistence.hpp"
 
 using namespace std;

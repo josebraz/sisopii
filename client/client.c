@@ -8,8 +8,8 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-#include "constants.h"
-#include "logs.h"
+#include "../constants.h"
+#include "../logs.h"
 
 struct sockaddr_in servaddr;
 int sockfd;

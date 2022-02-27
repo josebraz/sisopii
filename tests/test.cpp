@@ -9,7 +9,7 @@
 
 #include "../constants.h"
 #include "../types.hpp"
-#include "../persistence.hpp"
+#include "../server/persistence.hpp"
 
 void print_users(user_p *users, int total) {
     for (int i = 0; i < total; i++)

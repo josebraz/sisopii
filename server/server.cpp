@@ -11,8 +11,8 @@
 #include <vector>
 #include <string>
 
-#include "constants.h"
-#include "types.hpp"
+#include "../constants.h"
+#include "../types.hpp"
 #include "persistence.hpp"
 
 using namespace std;
