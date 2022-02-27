@@ -18,12 +18,16 @@ void read_string(string &s, FILE *fp);
 
 void read_vector_string(vector<string>* vector, FILE *fp);
 
-int read_users(user *users[])
+int read_users(user_p *users[])
 {
     int total;
     FILE *fp;
 
+    #ifndef TEST  
     fp = fopen("db/users.bin", "rb");
+    #else
+    fp = fopen("tests/temp/test_users.bin", "rb");
+    #endif
 
     if (fp == NULL)
     {
@@ -34,13 +38,10 @@ int read_users(user *users[])
 
     if (fread(&total, sizeof(int), 1, fp) != 1)
     {
-        // arquivo vazio
         return 0;
     }
 
-    cerr << "total " << total << endl;
-
-    users = (user **) calloc(total, sizeof(user *));
+    *users = new user_p[total];
     for (int i = 0; i < total; i++)
     {
         string username;
@@ -49,20 +50,11 @@ int read_users(user *users[])
         read_string(username, fp);
         read_vector_string(follows, fp);
 
-        user user = {username, follows};
-        users[i] = &user;
-    }
+        user_p read_user = new user();
+        read_user->username = username;
+        read_user->follows = follows;
 
-    for (int i = 0; i < total; i++)
-    {
-        if (users[i]->follows->size() > 0)
-        {
-            cerr << "Username " << users[i]->username << " first follower " << users[i]->follows->front() << endl;
-        }
-        else
-        {
-            cerr << "Username " << users[i]->username << endl;
-        }
+        (*users)[i] = read_user;
     }
 
     fclose(fp);
@@ -70,11 +62,15 @@ int read_users(user *users[])
     return total;
 }
 
-void write_users(const user users[], const int total)
+void write_users(const user_p users[], const int total)
 {
     FILE *fp;
 
+    #ifndef TEST  
     fp = fopen("db/users.bin", "wb");
+    #else
+    fp = fopen("tests/temp/test_users.bin", "wb");
+    #endif
 
     if (fp == NULL)
     {
@@ -86,10 +82,10 @@ void write_users(const user users[], const int total)
     
     for (int i = 0; i < total; i++)
     {
-        const user user = users[i];
+        const user *user = users[i];
 
-        write_string(user.username, fp);
-        write_vector_string(user.follows, fp);
+        write_string(user->username, fp);
+        write_vector_string(user->follows, fp);
     }
 
     fclose(fp);

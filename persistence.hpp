@@ -3,8 +3,8 @@
 
 #include "types.hpp"
 
-int read_users(user *users[]);
+int read_users(user_p *users[]);
 
-void write_users(const user users[], const int total);
+void write_users(const user_p users[], const int total);
 
 #endif

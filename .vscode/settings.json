@@ -6,7 +6,9 @@
         "string": "cpp",
         "iostream": "cpp",
         "ostream": "cpp",
-        "new": "cpp"
+        "new": "cpp",
+        "deque": "cpp",
+        "vector": "cpp"
     },
     "files.exclude": {
         "*.o": true

@@ -62,38 +62,6 @@ void start_server()
 
 int main()
 {
-    vector<string> followers1;
-    followers1.push_back("user2");
-    followers1.push_back("user3");
-
-    vector<string> followers2;
-    followers2.push_back("user1");
-    followers2.push_back("user3");
-
-    vector<string> followers3;
-    followers3.push_back("user1");
-
-    user test_users[3] = {
-        {"user1", &followers1},
-        {"user2", &followers2},
-        {"user3", &followers3}};
-
-    for (int i = 0; i < 3; i++)
-    {
-        if (test_users[i].follows->size() > 0)
-        {
-            cout << "Username " << test_users[i].username << " first follower " << test_users[i].follows->front() << "\n";
-        }
-        else
-        {
-            cout << "Username " << test_users[i].username;
-        }
-    }
-
-    write_users(test_users, 3);
-
-    user **test_users_read;
-    read_users(test_users_read);
 
     start_server();
 

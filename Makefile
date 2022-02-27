@@ -11,6 +11,12 @@ client: client.obj
 	
 client.obj: client.c logs.c
 	gcc -c client.c logs.c
+
+tests: tests.obj
+	g++ -o build/tests test.o logs.o persistence.o -lpthread
+
+tests.obj:
+	g++ -c tests/test.cpp logs.c persistence.cpp -DTEST 
 	
 clean: 
 	rm server.o client.o logs.o build/server build/client

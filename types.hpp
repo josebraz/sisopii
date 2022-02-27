@@ -31,6 +31,6 @@ typedef struct __user
 {
     string username;
     vector<string>* follows;
-} user;
+} user, *user_p;
 
 #endif
