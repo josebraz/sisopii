@@ -10,6 +10,7 @@
 #include "../constants.h"
 #include "../types.hpp"
 #include "../server/persistence.hpp"
+#include "../communication_utils.hpp"
 
 void print_users(user_p *users, int total) {
     for (int i = 0; i < total; i++)
@@ -93,10 +94,57 @@ void persistence_test() {
     for (int i = 0; i < total; i++) {
         compare_user(test_users_read[i], test_users[i]);
     }
+
+    free(test_users);
+    free(test_users_read);
+}
+
+bool marshalling_packet_test() {
+    packet *readed_message;
+    char *buffer;
+    char payload[] = "TESTEEE";
+
+    packet original_message = {
+        3U, 
+        4U, 
+        strlen(payload), 
+        time(NULL),
+        payload
+    };
+
+    size_t message_size = marshalling_packet(&original_message, &buffer);
+    unmarshalling_packet(&readed_message, buffer);
+
+    if (readed_message->type != original_message.type) {
+        cerr << "Not same type " << readed_message->type << " != " << original_message.type << endl;
+        return false;
+    }
+
+    if (readed_message->seqn != original_message.seqn) {
+        cerr << "Not same seqn " << readed_message->seqn << " != " << original_message.seqn << endl;
+        return false;
+    }
+
+    if (readed_message->length != original_message.length) {
+        cerr << "Not same length " << readed_message->length << " != " << original_message.length << endl;
+        return false;
+    }
+
+    if (strcmp(readed_message->payload, original_message.payload) != 0) {
+        cerr << "Not same payload " << readed_message->payload << " != " << original_message.payload << endl;
+        return false;
+    }
+
+    free(readed_message);
+    free(readed_message->payload);
+    free(buffer);
+
+    return true;
 }
 
 int main(int argc, char **argv) {
     persistence_test();
+    marshalling_packet_test();
 
     return 0;
 }

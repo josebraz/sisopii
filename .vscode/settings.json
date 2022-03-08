@@ -8,7 +8,9 @@
         "ostream": "cpp",
         "new": "cpp",
         "deque": "cpp",
-        "vector": "cpp"
+        "vector": "cpp",
+        "system_error": "cpp",
+        "string_view": "cpp"
     },
     "files.exclude": {
         "*.o": true
