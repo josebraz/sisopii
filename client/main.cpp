@@ -1,7 +1,7 @@
 
 #include <string>
 
-#include "communication_manager.hpp"
+#include "client_comm_manager.hpp"
 #include "presentation.hpp"
 
 using namespace std;
@@ -18,7 +18,7 @@ int main(int argc, char **argv)
     int port = atoi(argv[3]);
 
     start_client(server_addr, port, my_user);
-    
+
     send_login_msg(my_user);
 
     start_presentation();

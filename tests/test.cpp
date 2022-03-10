@@ -2,15 +2,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <pthread.h>
 
 #include <iostream>
 #include <vector>
 #include <string>
 
+
 #include "../constants.h"
 #include "../types.hpp"
 #include "../server/persistence.hpp"
 #include "../communication_utils.hpp"
+
+#include "../server/server_comm_manager.hpp"
+#include "../client/client_comm_manager.hpp"
 
 void print_users(user_p *users, int total) {
     for (int i = 0; i < total; i++)
@@ -82,7 +87,9 @@ bool compare_user(user_p user1, user_p user2) {
     return true;
 } 
 
-void persistence_test() {
+bool persistence_test() {
+    cout << "persistence_test... ";
+
     user_p *test_users;
     int total = create_test_users(&test_users);
 
@@ -92,14 +99,21 @@ void persistence_test() {
     int read_total = read_users(&test_users_read);
 
     for (int i = 0; i < total; i++) {
-        compare_user(test_users_read[i], test_users[i]);
+        if (!compare_user(test_users_read[i], test_users[i])) {
+            return false;
+        }
     }
 
     free(test_users);
     free(test_users_read);
+
+    cout << "OK" << endl;
+    return true;
 }
 
 bool marshalling_packet_test() {
+    cout << "marshalling_packet_test... ";
+
     packet *readed_message;
     char *buffer;
     char payload[] = "TESTEEE";
@@ -107,8 +121,8 @@ bool marshalling_packet_test() {
     packet original_message = {
         3U, 
         4U, 
-        strlen(payload), 
-        time(NULL),
+        (uint16_t) strlen(payload), 
+        (uint32_t) time(NULL),
         payload
     };
 
@@ -135,16 +149,35 @@ bool marshalling_packet_test() {
         return false;
     }
 
-    free(readed_message);
-    free(readed_message->payload);
+    free_packet(readed_message);
     free(buffer);
 
+    cout << "OK" << endl;
     return true;
+}
+
+void server_client_test() {
+    cout << "server_client_test... " << endl;
+
+    char user[] = "jose"; 
+    char server_addr[] = "localhost";
+
+    pthread_t s_thread = start_server(SERVER_PORT);
+    pthread_t c_thread = start_client(server_addr, SERVER_PORT);
+    
+    int login_result = send_echo_msg("TA AI?");
+
+    printf("login_result %d\n", login_result);
+
+    // pthread_join(s_thread, NULL);
+
+    cout << "OK" << endl;
 }
 
 int main(int argc, char **argv) {
     persistence_test();
     marshalling_packet_test();
+    server_client_test();
 
     return 0;
 }

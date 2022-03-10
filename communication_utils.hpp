@@ -9,4 +9,8 @@ void unmarshalling_packet(packet **message, const char *buffer);
 
 void print_packet(const packet *message);
 
+void copy_packet(packet **dest, const packet *src);
+
+void free_packet(packet *p);
+
 #endif

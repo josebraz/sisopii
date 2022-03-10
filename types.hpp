@@ -14,6 +14,7 @@
 #define PACKET_CMD_FOLLOW_T 3
 #define PACKET_CMD_UNFOLLOW_T 4
 #define PACKET_CMD_NOTIFY_T 5
+#define PACKET_CMD_ECHO_T 30
 
 // Tipos de dados que o usuário pode receber com status OK
 #define PACKET_DATA_NOTIFICATION_T 100
@@ -30,9 +31,9 @@ typedef struct __packet
 {
     uint16_t type;        // Tipo do pacote
     uint16_t seqn;        // Número de sequência
-    size_t length;        // Comprimento do payload
-    time_t timestamp;     // Timestamp do dado
-    char *payload; // Dados da mensagem
+    uint16_t length;      // Comprimento do payload
+    uint32_t timestamp;   // Timestamp do dado
+    char *payload;        // Dados da mensagem
 } packet;
 
 typedef struct __notification
