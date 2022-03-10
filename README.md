@@ -14,13 +14,15 @@ Faz parte da cadeira de Sistemas Operacionais II na UFRGS. Consiste basicamente 
 
 #### Cliente
 * Abrir um cliente UDP - OK
-* Parametros de inicialização 
+* Parametros de inicialização - OK
 * Iniciar uma sessão no servidor (informando usuário)
 * Seguir um outro usuário (para receber notificações dele)
 * Possibilidade de postar (enviar notificação)
 
 ### Implementação
 * Organizar em uma estrutura de módulos - OK
+* Funções de marshalling e unmarshalling - OK
+* Lógica de esperar pela resposta do servidor após enviar mensagem - OK
 * Para cada cliente, ter uma instância de um Produtor-Consumidor de notificações em que:
     * Produzir: Receber a notificação do enviada do cliente, atualizar a 
     lista de notificação pendentes de envio, para cada servidor atualizar 
