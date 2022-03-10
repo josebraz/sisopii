@@ -5,7 +5,7 @@
 #include "presentation.hpp"
 #include "../constants.h"
 #include "../logs.hpp"
-#include "communication_manager.hpp"
+#include "client_comm_manager.hpp"
 
 void start_presentation() {
     char user_input[PAYLOAD_MAX_SIZE];

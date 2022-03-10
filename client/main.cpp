@@ -17,7 +17,7 @@ int main(int argc, char **argv)
     char *server_addr = argv[2];
     int port = atoi(argv[3]);
 
-    start_client(server_addr, port, my_user);
+    start_client(server_addr, port);
 
     send_login_msg(my_user);
 

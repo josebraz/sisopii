@@ -129,8 +129,8 @@ void *client_message_receiver(void *arg)
             continue;
         }
 
-        printf("Client received: "); 
-        print_packet(message);
+        // printf("Client received: "); 
+        // print_packet(message);
 
         signal_response(message);
 
@@ -159,25 +159,20 @@ packet *client_send_message(uint16_t type, char *payload)
             payload
         };
 
-        printf("Client send: "); 
-        print_packet(&message);
+        // printf("Client send: "); 
+        // print_packet(&message);
 
         size_t message_size = marshalling_packet(&message, &buffer);
 
         ssize_t size = sendto(
             client_sockfd,
-            (const void *) &buffer,
+            (const void *) buffer,
             message_size,
             0,
             (const struct sockaddr *)&servaddr,
             sizeof(struct sockaddr_in));
-
-        for (int i = 0; i < size; i++) {
-            printf("%x, ", buffer[i]);
-        }
-        printf("\n");
         
-        // free(buffer);
+        free(buffer);
 
         if (size == -1)
         {

@@ -156,28 +156,31 @@ bool marshalling_packet_test() {
     return true;
 }
 
-void server_client_test() {
-    cout << "server_client_test... " << endl;
+bool server_client_echo_test() {
+    cout << "server_client_echo_test... ";
 
     char user[] = "jose"; 
     char server_addr[] = "localhost";
+    char echo_message[] = "TA AI?";
 
     pthread_t s_thread = start_server(SERVER_PORT);
     pthread_t c_thread = start_client(server_addr, SERVER_PORT);
     
-    int login_result = send_echo_msg("TA AI?");
+    int echo_result = send_echo_msg(echo_message);
 
-    printf("login_result %d\n", login_result);
-
-    // pthread_join(s_thread, NULL);
+    if (echo_result != 1) {
+        cerr << "Echo result error" << endl;
+        return false;
+    }
 
     cout << "OK" << endl;
+    return true;
 }
 
 int main(int argc, char **argv) {
     persistence_test();
     marshalling_packet_test();
-    server_client_test();
+    server_client_echo_test();
 
     return 0;
 }

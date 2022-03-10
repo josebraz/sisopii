@@ -1,4 +1,5 @@
 #include "stdio.h"
+#include "errno.h"
 #include "logs.hpp"
 
 void _log(LOG_LEVEL level, const char* message) {
@@ -12,5 +13,7 @@ void log_debug(const char* message) {
 }
 
 void log_error(const char* message) {
-    _log(ERROR, message);
+    if (_currentLevel != OFF && ERROR >= _currentLevel) {
+        printf("LOG %s code: %d: %s\n", LOG_LEVEL_STRING[ERROR], errno, message);
+    }
 }
