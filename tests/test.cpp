@@ -15,6 +15,7 @@
 #include "../communication_utils.hpp"
 
 #include "../server/server_comm_manager.hpp"
+#include "../server/session_manager.hpp"
 #include "../client/client_comm_manager.hpp"
 
 void print_users(user_p *users, int total) {
@@ -48,14 +49,17 @@ int create_test_users(user_p *test_users[]) {
     user_p user1 = new user();
     user1->username = "user1";
     user1->follows = followers1;
+    user1->sessions = 0;
 
     user_p user2 = new user();
     user2->username = "user2";
     user2->follows = followers2;
+    user2->sessions = 0;
 
     user_p user3 = new user();
     user3->username = "user3";
     user3->follows = followers3;
+    user3->sessions = 0;
 
     *test_users = new user_p[total];
 
@@ -68,18 +72,18 @@ int create_test_users(user_p *test_users[]) {
 
 bool compare_user(user_p user1, user_p user2) {
     if (user1->username.compare(user2->username) != 0) {
-        cerr << "Not same username " << user1->username << " != " << user2->username << endl;
+        cerr << endl << "Not same username " << user1->username << " != " << user2->username << endl;
         return false;
     }
 
     if (user1->follows->size() != user2->follows->size()) {
-        cerr << "Not same follows size " << user1->follows->size() << " != " << user2->follows->size() << endl;
+        cerr << endl << "Not same follows size " << user1->follows->size() << " != " << user2->follows->size() << endl;
         return false;
     }
 
     for (int i = 0; i < user1->follows->size(); i++) {
         if (user1->follows->at(i).compare(user2->follows->at(i)) != 0) {
-            cerr << "Not same follow " << user1->follows->at(i) << " != " << user2->follows->at(i) << endl;
+            cerr << endl << "Not same follow " << user1->follows->at(i) << " != " << user2->follows->at(i) << endl;
             return false;
         }
     }
@@ -95,8 +99,8 @@ bool persistence_test() {
 
     write_users((const user_p*) test_users, total);
 
-    user_p *test_users_read;
-    int read_total = read_users(&test_users_read);
+    user_p test_users_read[10];
+    int read_total = read_users(test_users_read);
 
     for (int i = 0; i < total; i++) {
         if (!compare_user(test_users_read[i], test_users[i])) {
@@ -105,7 +109,6 @@ bool persistence_test() {
     }
 
     free(test_users);
-    free(test_users_read);
 
     cout << "OK" << endl;
     return true;
@@ -130,22 +133,22 @@ bool marshalling_packet_test() {
     unmarshalling_packet(&readed_message, buffer);
 
     if (readed_message->type != original_message.type) {
-        cerr << "Not same type " << readed_message->type << " != " << original_message.type << endl;
+        cerr << endl << "Not same type " << readed_message->type << " != " << original_message.type << endl;
         return false;
     }
 
     if (readed_message->seqn != original_message.seqn) {
-        cerr << "Not same seqn " << readed_message->seqn << " != " << original_message.seqn << endl;
+        cerr << endl << "Not same seqn " << readed_message->seqn << " != " << original_message.seqn << endl;
         return false;
     }
 
     if (readed_message->length != original_message.length) {
-        cerr << "Not same length " << readed_message->length << " != " << original_message.length << endl;
+        cerr << endl << "Not same length " << readed_message->length << " != " << original_message.length << endl;
         return false;
     }
 
     if (strcmp(readed_message->payload, original_message.payload) != 0) {
-        cerr << "Not same payload " << readed_message->payload << " != " << original_message.payload << endl;
+        cerr << endl << "Not same payload " << readed_message->payload << " != " << original_message.payload << endl;
         return false;
     }
 
@@ -169,7 +172,65 @@ bool server_client_echo_test() {
     int echo_result = send_echo_msg(echo_message);
 
     if (echo_result != 1) {
-        cerr << "Echo result error" << endl;
+        cerr << endl << "Echo result error" << endl;
+        return false;
+    }
+
+    cout << "OK" << endl;
+    return true;
+}
+
+bool session_manager_test() {
+    cout << "session_manager_test... ";
+
+    char message[100];
+    char user[] = "jose";
+    int result_code;
+
+    clear_all_users();
+    init_session_manager();
+
+    // Primeiro login, deve criar usuário
+    result_code = login(user, message);
+    if (result_code != PACKET_DATA_LOGIN_OK_T) {
+        cerr << endl << "Erro no primeiro login" << endl;
+        return false;
+    }
+
+    // Segundo login, atinge o máximo de sessões
+    result_code = login(user, message);
+    if (result_code != PACKET_DATA_LOGIN_OK_T) {
+        cerr << endl << "Erro no segundo login" << endl;
+        return false;
+    }
+
+    // Deve dar erro de máximas sessões
+    result_code = login(user, message);
+    if (result_code != PACKET_DATA_LOGIN_ERROR_T) {
+        cerr << endl << "Não respita máximo de sessões simultâneas" << endl;
+        return false;
+    }
+
+    // Logout de uma das sessões
+    result_code = logout(user, message);
+    if (result_code != PACKET_DATA_LOGOUT_OK_T) {
+        cerr << endl << "Erro no logout com duas sessões simultâneas" << endl;
+        return false;
+    }
+
+    // Depois de um logout, tenta logar mais uma vez
+    result_code = login(user, message);
+    if (result_code != PACKET_DATA_LOGIN_OK_T) {
+        cerr << endl << "Erro no segundo login após logout" << endl;
+        return false;
+    }
+
+    // Tem duas sessões e se desloga de 3
+    result_code = logout(user, message);
+    result_code = logout(user, message);
+    result_code = logout(user, message);
+    if (result_code != PACKET_DATA_LOGOUT_ERROR_T) {
+        cerr << endl << "Logout sem nenhum sessão funcionou (?)" << endl;
         return false;
     }
 
@@ -181,6 +242,7 @@ int main(int argc, char **argv) {
     persistence_test();
     marshalling_packet_test();
     server_client_echo_test();
+    session_manager_test();
 
     return 0;
 }

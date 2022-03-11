@@ -12,8 +12,8 @@ client: client.obj
 client.obj: client/main.cpp client/client_comm_manager.cpp client/presentation.cpp client/notification_manager.cpp communication_utils.cpp logs.cpp
 	g++ -static -g -c client/main.cpp client/client_comm_manager.cpp client/presentation.cpp client/notification_manager.cpp communication_utils.cpp logs.cpp
 
-tests: tests/test.cpp logs.cpp communication_utils.cpp server/persistence.cpp server/server_comm_manager.cpp client/client_comm_manager.cpp
-	g++ -static -g -o build/tests tests/test.cpp logs.cpp communication_utils.cpp server/persistence.cpp server/server_comm_manager.cpp client/client_comm_manager.cpp -DTEST -lpthread
+tests: tests/test.cpp logs.cpp communication_utils.cpp server/persistence.cpp server/server_comm_manager.cpp client/client_comm_manager.cpp server/session_manager.cpp
+	g++ -static -g -o build/tests tests/test.cpp logs.cpp communication_utils.cpp server/persistence.cpp server/server_comm_manager.cpp client/client_comm_manager.cpp server/session_manager.cpp -DTEST -lpthread
 
 clean: 
 	rm -f server.o client.o logs.o test.o communication_utils.o persistence.o notification_manager.o presentation.o server_comm_manager.o client_comm_manager.o build/* /tests/temp/*.bin

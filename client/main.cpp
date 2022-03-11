@@ -19,9 +19,12 @@ int main(int argc, char **argv)
 
     start_client(server_addr, port);
 
-    send_login_msg(my_user);
+    if (send_login_msg(my_user) == 0) {
+        printf("Erro no login! Finalizando...\n");
+        return 1;
+    }
 
-    start_presentation();
+    start_presentation(my_user);
 
     return 0;
 }

@@ -17,6 +17,7 @@
 #include "../communication_utils.hpp"
 #include "persistence.hpp"
 #include "server_comm_manager.hpp"
+#include "session_manager.hpp"
 
 using namespace std;
 
@@ -55,7 +56,8 @@ pthread_t start_server(int port)
 void *server_message_receiver(void *arg) {
     struct sockaddr_in cliaddr;
     char buffer[PAYLOAD_MAX_SIZE];
-    int n;
+    char result_message[RESULT_MESSAGE_MAX_SIZE];
+    int n, result_code;
     packet *message;
 
     socklen_t len = sizeof(struct sockaddr_in);
@@ -82,11 +84,19 @@ void *server_message_receiver(void *arg) {
             continue;
         }
 
-        // printf("Server received: ");
-        // print_packet(message);
+        printf("Server received: ");
+        print_packet(message);
 
         if (message->type == PACKET_CMD_ECHO_T) {
             server_send_message(PACKET_CMD_ECHO_T, message->payload, (struct sockaddr *) &cliaddr);
+        } else if (message->type == PACKET_CMD_LOGIN_T) {
+            result_code = login(message->payload, result_message);
+            server_send_message(result_code, result_message, (struct sockaddr *) &cliaddr);
+        } else if (message->type == PACKET_CMD_LOGOUT_T) {
+            result_code = logout(message->payload, result_message);
+            server_send_message(result_code, result_message, (struct sockaddr *) &cliaddr);
+        } else if (message->type == PACKET_CMD_ALIVE_T) {
+
         } else {
             // TODO: implementar a lógica do request
         }
@@ -113,8 +123,8 @@ void server_send_message(uint16_t type, char *payload, const struct sockaddr *cl
             payload
         };
 
-        // printf("Server send: "); 
-        // print_packet(&message);
+        printf("Server send: "); 
+        print_packet(&message);
 
         size_t message_size = marshalling_packet(&message, &buffer);
 

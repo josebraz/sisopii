@@ -19,11 +19,13 @@
 // Tipos de dados que o usuário pode receber com status OK
 #define PACKET_DATA_NOTIFICATION_T 100
 #define PACKET_DATA_LOGIN_OK_T 101
-#define PACKET_DATA_GENERAL_OK_T 102
+#define PACKET_DATA_LOGOUT_OK_T 102
+#define PACKET_DATA_GENERAL_OK_T 103
 
 // Tipos de dados que o usuário pode receber com status ERROR
 #define PACKET_DATA_LOGIN_ERROR_T 200
-#define PACKET_DATA_GENERAL_ERROR_T 201
+#define PACKET_DATA_LOGOUT_ERROR_T 201
+#define PACKET_DATA_GENERAL_ERROR_T 202
 
 using namespace std;
 
@@ -49,6 +51,7 @@ typedef struct __user
 {
     string username;
     vector<string>* follows;
+    uint8_t sessions;
 } user, *user_p;
 
 #endif

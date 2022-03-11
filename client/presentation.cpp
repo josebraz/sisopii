@@ -7,7 +7,7 @@
 #include "../logs.hpp"
 #include "client_comm_manager.hpp"
 
-void start_presentation() {
+void start_presentation(char *my_user) {
     char user_input[PAYLOAD_MAX_SIZE];
 
     while (1) {
@@ -23,6 +23,7 @@ void start_presentation() {
         } else if (strncmp("SEND", user_input, 4) == 0) {
             send_notify_msg(user_input + 5);
         } else if (strncmp("EXIT", user_input, 4) == 0) {
+            send_logout_msg(my_user);
             printf("BYE\n");
             break;
         } else {

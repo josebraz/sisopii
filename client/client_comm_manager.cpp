@@ -129,8 +129,8 @@ void *client_message_receiver(void *arg)
             continue;
         }
 
-        // printf("Client received: "); 
-        // print_packet(message);
+        printf("Client received: "); 
+        print_packet(message);
 
         signal_response(message);
 
@@ -159,8 +159,8 @@ packet *client_send_message(uint16_t type, char *payload)
             payload
         };
 
-        // printf("Client send: "); 
-        // print_packet(&message);
+        printf("Client send: "); 
+        print_packet(&message);
 
         size_t message_size = marshalling_packet(&message, &buffer);
 
@@ -195,6 +195,7 @@ int send_echo_msg(char *text) {
 
 int send_login_msg(char *username) {
     packet *message = client_send_message(PACKET_CMD_LOGIN_T, username);
+    print_packet(message);
     if (message != NULL && message->type == PACKET_DATA_LOGIN_OK_T) {
         return 1;
     } else {

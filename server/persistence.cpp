@@ -18,7 +18,7 @@ void read_string(string &s, FILE *fp);
 
 void read_vector_string(vector<string>* vector, FILE *fp);
 
-int read_users(user_p *users[])
+int read_users(user_p *users)
 {
     int total;
     FILE *fp;
@@ -29,19 +29,13 @@ int read_users(user_p *users[])
     fp = fopen("tests/temp/users.bin", "rb");
     #endif
 
-    if (fp == NULL)
-    {
-        printf("Error opening file\n");
-        exit(1);
-        return 0;
-    }
+    if (fp == NULL) return 0; // Arquivo não existe
 
     if (fread(&total, sizeof(int), 1, fp) != 1)
     {
         return 0;
     }
 
-    *users = new user_p[total];
     for (int i = 0; i < total; i++)
     {
         string username;
@@ -53,8 +47,9 @@ int read_users(user_p *users[])
         user_p read_user = new user();
         read_user->username = username;
         read_user->follows = follows;
+        read_user->sessions = 0;
 
-        (*users)[i] = read_user;
+        users[i] = read_user;
     }
 
     fclose(fp);
@@ -89,6 +84,16 @@ void write_users(const user_p users[], const int total)
     }
 
     fclose(fp);
+}
+
+void clear_all_users() {
+    #ifndef TEST  
+    char file[] = "db/users.bin";
+    #else
+    char file[] = "tests/temp/users.bin";
+    #endif
+
+    remove(file);
 }
 
 void write_vector_string(const vector<string> *vector, FILE *fp) {
