@@ -9,13 +9,13 @@ Faz parte da cadeira de Sistemas Operacionais II na UFRGS. Consiste basicamente 
 * Carregar a persistência quando iniciar o servidor - OK
 * Abrir um servidor UDP - OK
 * Gerenciador de sessões de usuários (iniciar sessão, máximo duas por usuário) - OK
-* Fazer o dispatcher das notificações (enviar para todos os seguidores atuais do usuário)
+* Fazer o dispatcher das notificações (enviar para todos os seguidores atua is do usuário)
 * Enviar as notificações pendentes desde a última sessão iniciada (cuidar caso com duas sessões ativas)
 
 #### Cliente
 * Abrir um cliente UDP - OK
 * Parametros de inicialização - OK
-* Iniciar uma sessão no servidor (informando usuário) - DOING
+* Iniciar uma sessão no servidor (informando usuário) - OK
 * Seguir um outro usuário (para receber notificações dele)
 * Possibilidade de postar (enviar notificação)
 

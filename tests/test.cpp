@@ -18,20 +18,6 @@
 #include "../server/session_manager.hpp"
 #include "../client/client_comm_manager.hpp"
 
-void print_users(user_p *users, int total) {
-    for (int i = 0; i < total; i++)
-    {
-        if (users[i]->follows->size() > 0)
-        {
-            cerr << "Username " << users[i]->username << " first follower " << users[i]->follows->front() << endl;
-        }
-        else
-        {
-            cerr << "Username " << users[i]->username << endl;
-        }
-    }
-}
-
 int create_test_users(user_p *test_users[]) {
     int total = 3;
 
@@ -49,17 +35,17 @@ int create_test_users(user_p *test_users[]) {
     user_p user1 = new user();
     user1->username = "user1";
     user1->follows = followers1;
-    user1->sessions = 0;
+    user1->addresses = new vector<user_address*>();
 
     user_p user2 = new user();
     user2->username = "user2";
     user2->follows = followers2;
-    user2->sessions = 0;
+    user2->addresses = new vector<user_address*>();
 
     user_p user3 = new user();
     user3->username = "user3";
     user3->follows = followers3;
-    user3->sessions = 0;
+    user3->addresses = new vector<user_address*>();
 
     *test_users = new user_p[total];
 
@@ -72,18 +58,18 @@ int create_test_users(user_p *test_users[]) {
 
 bool compare_user(user_p user1, user_p user2) {
     if (user1->username.compare(user2->username) != 0) {
-        cerr << endl << "Not same username " << user1->username << " != " << user2->username << endl;
+        cerr << "ERRO" << endl << "Not same username " << user1->username << " != " << user2->username << endl;
         return false;
     }
 
     if (user1->follows->size() != user2->follows->size()) {
-        cerr << endl << "Not same follows size " << user1->follows->size() << " != " << user2->follows->size() << endl;
+        cerr << "ERRO" << endl << "Not same follows size " << user1->follows->size() << " != " << user2->follows->size() << endl;
         return false;
     }
 
     for (int i = 0; i < user1->follows->size(); i++) {
         if (user1->follows->at(i).compare(user2->follows->at(i)) != 0) {
-            cerr << endl << "Not same follow " << user1->follows->at(i) << " != " << user2->follows->at(i) << endl;
+            cerr << "ERRO" << endl << "Not same follow " << user1->follows->at(i) << " != " << user2->follows->at(i) << endl;
             return false;
         }
     }
@@ -133,22 +119,22 @@ bool marshalling_packet_test() {
     unmarshalling_packet(&readed_message, buffer);
 
     if (readed_message->type != original_message.type) {
-        cerr << endl << "Not same type " << readed_message->type << " != " << original_message.type << endl;
+        cerr << "ERRO" << endl << "Not same type " << readed_message->type << " != " << original_message.type << endl;
         return false;
     }
 
     if (readed_message->seqn != original_message.seqn) {
-        cerr << endl << "Not same seqn " << readed_message->seqn << " != " << original_message.seqn << endl;
+        cerr << "ERRO" << endl << "Not same seqn " << readed_message->seqn << " != " << original_message.seqn << endl;
         return false;
     }
 
     if (readed_message->length != original_message.length) {
-        cerr << endl << "Not same length " << readed_message->length << " != " << original_message.length << endl;
+        cerr << "ERRO" << endl << "Not same length " << readed_message->length << " != " << original_message.length << endl;
         return false;
     }
 
     if (strcmp(readed_message->payload, original_message.payload) != 0) {
-        cerr << endl << "Not same payload " << readed_message->payload << " != " << original_message.payload << endl;
+        cerr << "ERRO" << endl << "Not same payload " << readed_message->payload << " != " << original_message.payload << endl;
         return false;
     }
 
@@ -172,7 +158,7 @@ bool server_client_echo_test() {
     int echo_result = send_echo_msg(echo_message);
 
     if (echo_result != 1) {
-        cerr << endl << "Echo result error" << endl;
+        cerr << "ERRO" << endl << "Echo result error" << endl;
         return false;
     }
 
@@ -187,50 +173,156 @@ bool session_manager_test() {
     char user[] = "jose";
     int result_code;
 
+    user_address address1;
+    address1.sin_family = AF_INET; // IPv4
+    address1.sin_addr.s_addr = 999930;
+    address1.sin_port = htons(4000);
+    bzero(&(address1.sin_zero), 8);  
+
+    user_address address2;
+    address2.sin_family = AF_INET; // IPv4
+    address2.sin_addr.s_addr = 190930;
+    address2.sin_port = htons(30000);
+    bzero(&(address2.sin_zero), 8);  
+
+    user_address address3;
+    address3.sin_family = AF_INET; // IPv4
+    address3.sin_addr.s_addr = 10930;
+    address3.sin_port = htons(2050);
+    bzero(&(address3.sin_zero), 8);  
+
     clear_all_users();
     init_session_manager();
 
     // Primeiro login, deve criar usuário
-    result_code = login(user, message);
+    result_code = login(user, &address1, message);
     if (result_code != PACKET_DATA_LOGIN_OK_T) {
-        cerr << endl << "Erro no primeiro login" << endl;
+        cerr << "ERRO" << endl << "Erro no primeiro login" << endl;
+        return false;
+    }
+
+    // Repete o último login, com o mesmo endereço
+    result_code = login(user, &address1, message);
+    if (result_code != PACKET_DATA_LOGIN_ERROR_T) {
+        cerr << "ERRO" << endl << "Mesmo login, no mesmo processo, deveria dar erro" << endl;
         return false;
     }
 
     // Segundo login, atinge o máximo de sessões
-    result_code = login(user, message);
+    result_code = login(user, &address2, message);
     if (result_code != PACKET_DATA_LOGIN_OK_T) {
-        cerr << endl << "Erro no segundo login" << endl;
+        cerr << "ERRO" << endl << "Erro no segundo login" << endl;
         return false;
     }
 
     // Deve dar erro de máximas sessões
-    result_code = login(user, message);
+    result_code = login(user, &address3, message);
     if (result_code != PACKET_DATA_LOGIN_ERROR_T) {
-        cerr << endl << "Não respita máximo de sessões simultâneas" << endl;
+        cerr << "ERRO" << endl << "Não respita máximo de sessões simultâneas" << endl;
         return false;
     }
 
-    // Logout de uma das sessões
-    result_code = logout(user, message);
+    // Logout de uma das sessões ativas
+    result_code = logout(user, &address1, message);
     if (result_code != PACKET_DATA_LOGOUT_OK_T) {
-        cerr << endl << "Erro no logout com duas sessões simultâneas" << endl;
+        cerr << "ERRO" << endl << "Erro no logout com duas sessões simultâneas" << endl;
+        return false;
+    }
+
+    // Tenta dar logout de um endereço que não tem sessão
+    result_code = logout(user, &address3, message);
+    if (result_code != PACKET_DATA_LOGOUT_ERROR_T) {
+        cerr << "ERRO" << endl << "Logout sem nenhum sessão funcionou (?)" << endl;
         return false;
     }
 
     // Depois de um logout, tenta logar mais uma vez
-    result_code = login(user, message);
+    result_code = login(user, &address1, message);
     if (result_code != PACKET_DATA_LOGIN_OK_T) {
-        cerr << endl << "Erro no segundo login após logout" << endl;
+        cerr << "ERRO" << endl << "Erro no segundo login após logout" << endl;
         return false;
     }
 
-    // Tem duas sessões e se desloga de 3
-    result_code = logout(user, message);
-    result_code = logout(user, message);
-    result_code = logout(user, message);
-    if (result_code != PACKET_DATA_LOGOUT_ERROR_T) {
-        cerr << endl << "Logout sem nenhum sessão funcionou (?)" << endl;
+    // Logout da última sessão ativa
+    result_code = logout(user, &address2, message);
+    if (result_code != PACKET_DATA_LOGOUT_OK_T) {
+        cerr << "ERRO" << endl << "Erro no logout da ultima sessão ativa" << endl;
+        return false;
+    }
+
+    cout << "OK" << endl;
+    return true;
+}
+
+bool follow_unfollow_test() {
+    cout << "follow_unfollow_test... ";
+
+    user_address address1;
+    address1.sin_family = AF_INET; // IPv4
+    address1.sin_addr.s_addr = 999930;
+    address1.sin_port = htons(4000);
+    bzero(&(address1.sin_zero), 8);  
+
+    user_address address2;
+    address2.sin_family = AF_INET; // IPv4
+    address2.sin_addr.s_addr = 190930;
+    address2.sin_port = htons(30000);
+    bzero(&(address2.sin_zero), 8);  
+
+    user_address address3;
+    address3.sin_family = AF_INET; // IPv4
+    address3.sin_addr.s_addr = 10930;
+    address3.sin_port = htons(2050);
+    bzero(&(address3.sin_zero), 8);  
+
+    char message[100];
+    char user1[] = "jose";
+    char user2[] = "gabriel";
+    char user3[] = "matheus";
+    int result_code;
+
+    //////////////////////////////////
+    // Setup
+    clear_all_users();
+    init_session_manager();
+
+    login(user1, &address1, message);
+    login(user2, &address2, message);
+    login(user3, &address3, message);
+    //////////////////////////////////
+
+    // user1 segue o user2, tudo certo
+    result_code = follow(user1, user2, message);
+    if (result_code != PACKET_DATA_FOLLOW_OK_T) {
+        cerr << "ERRO" << endl << "Erro ao user1 seguir o user2" << endl;
+        return false;
+    }
+
+    // user1 segue o user2 de novo, deve dar erro
+    result_code = follow(user1, user2, message);
+    if (result_code != PACKET_DATA_FOLLOW_ERROR_T) {
+        cerr << "ERRO" << endl << "user1 conseguiu seguir duas vezes o user2" << endl;
+        return false;
+    }
+
+    // user1 segue o user3, tudo certo
+    result_code = follow(user1, user3, message);
+    if (result_code != PACKET_DATA_FOLLOW_OK_T) {
+        cerr << "ERRO" << endl << "Erro ao user1 seguir o user3" << endl;
+        return false;
+    }
+
+    // user2 da unfollow no user1 que ele não seguia, deve dar erro
+    result_code = unfollow(user2, user1, message);
+    if (result_code != PACKET_DATA_UNFOLLOW_ERROR_T) {
+        cerr << "ERRO" << endl << "user2 conseguiu dar unfollow no user1 que não seguia" << endl;
+        return false;
+    }
+
+    // user1 deixa de seguir o user3, tudo certo
+    result_code = unfollow(user1, user3, message);
+    if (result_code != PACKET_DATA_UNFOLLOW_OK_T) {
+        cerr << "ERRO" << endl << "Erro ao user1 deixar de seguir o user3" << endl;
         return false;
     }
 
@@ -243,6 +335,7 @@ int main(int argc, char **argv) {
     marshalling_packet_test();
     server_client_echo_test();
     session_manager_test();
+    follow_unfollow_test();
 
     return 0;
 }

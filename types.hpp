@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <netinet/in.h>
 
 #include "stdint.h"
 #include "constants.h"
@@ -21,11 +22,17 @@
 #define PACKET_DATA_LOGIN_OK_T 101
 #define PACKET_DATA_LOGOUT_OK_T 102
 #define PACKET_DATA_GENERAL_OK_T 103
+#define PACKET_DATA_FOLLOW_OK_T 104
+#define PACKET_DATA_UNFOLLOW_OK_T 105
 
 // Tipos de dados que o usuário pode receber com status ERROR
 #define PACKET_DATA_LOGIN_ERROR_T 200
 #define PACKET_DATA_LOGOUT_ERROR_T 201
 #define PACKET_DATA_GENERAL_ERROR_T 202
+#define PACKET_DATA_FOLLOW_ERROR_T 203
+#define PACKET_DATA_UNFOLLOW_ERROR_T 204
+
+#define USER_MAX_SESSIONS 2
 
 using namespace std;
 
@@ -47,11 +54,13 @@ typedef struct __notification
     const char *_string; // Mensagem
 } notification;
 
+typedef sockaddr_in user_address;
+
 typedef struct __user
 {
     string username;
-    vector<string>* follows;
-    uint8_t sessions;
+    vector<string>* follows; // username de quem segue esse usuário
+    vector<user_address*>* addresses;
 } user, *user_p;
 
 #endif

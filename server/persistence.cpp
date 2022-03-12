@@ -47,7 +47,7 @@ int read_users(user_p *users)
         user_p read_user = new user();
         read_user->username = username;
         read_user->follows = follows;
-        read_user->sessions = 0;
+        read_user->addresses = new vector<user_address*>();
 
         users[i] = read_user;
     }

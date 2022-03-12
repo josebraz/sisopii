@@ -90,10 +90,22 @@ void *server_message_receiver(void *arg) {
         if (message->type == PACKET_CMD_ECHO_T) {
             server_send_message(PACKET_CMD_ECHO_T, message->payload, (struct sockaddr *) &cliaddr);
         } else if (message->type == PACKET_CMD_LOGIN_T) {
-            result_code = login(message->payload, result_message);
+            result_code = login(message->payload, &cliaddr, result_message);
             server_send_message(result_code, result_message, (struct sockaddr *) &cliaddr);
         } else if (message->type == PACKET_CMD_LOGOUT_T) {
-            result_code = logout(message->payload, result_message);
+            result_code = logout(message->payload, &cliaddr, result_message);
+            server_send_message(result_code, result_message, (struct sockaddr *) &cliaddr);
+        } else if (message->type == PACKET_CMD_FOLLOW_T) {
+            user_p user_requester = find_user_by_address(&cliaddr);
+            const char *my_username;
+            if (user_requester == NULL) my_username = NULL; else my_username = user_requester->username.c_str();
+            result_code = follow(my_username, message->payload, result_message);
+            server_send_message(result_code, result_message, (struct sockaddr *) &cliaddr);
+        } else if (message->type == PACKET_CMD_UNFOLLOW_T) {
+            user_p user_requester = find_user_by_address(&cliaddr);
+            const char *my_username;
+            if (user_requester == NULL) my_username = NULL; else my_username = user_requester->username.c_str();
+            result_code = unfollow(my_username, message->payload, result_message);
             server_send_message(result_code, result_message, (struct sockaddr *) &cliaddr);
         } else if (message->type == PACKET_CMD_ALIVE_T) {
 
