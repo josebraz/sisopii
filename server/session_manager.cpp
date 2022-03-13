@@ -4,6 +4,7 @@
 
 #include "session_manager.hpp"
 #include "persistence.hpp"
+#include "../communication_utils.hpp"
 #include "../types.hpp"
 
 #define USER_SESSION_MAX_SIZE 1000
@@ -13,6 +14,12 @@ static user_p server_users[USER_SESSION_MAX_SIZE];
 
 void init_session_manager() {
     server_users_size = read_users(server_users);
+}
+
+void finalize_session_manager() {
+    for (int i = 0; i < server_users_size; i++) {
+        free_user(server_users[i]);
+    }
 }
 
 user_p find_user(const char *username) {
@@ -53,11 +60,11 @@ int login(const char *username, const user_address *address, char *message) {
             user_p local_user = new user();
             local_user->username = strdup(username);
             local_user->follows = new vector<string>();
-
             local_user->addresses = new vector<user_address*>();
             user_address* new_address = new user_address();
             memcpy(new_address, address, sizeof(user_address));
             local_user->addresses->push_back(new_address);
+            local_user->pending_msg = new vector<uint32_t>();
 
             server_users[server_users_size++] = local_user;
             write_users(server_users, server_users_size);

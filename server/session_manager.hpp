@@ -7,6 +7,8 @@
 
 void init_session_manager();
 
+void finalize_session_manager();
+
 user_p find_user(const char *username);
 
 user_p find_user_by_address(const user_address *address);

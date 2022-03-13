@@ -14,9 +14,31 @@
 #include "../server/persistence.hpp"
 #include "../communication_utils.hpp"
 
+#include "../server/server_notif_manager.hpp"
 #include "../server/server_comm_manager.hpp"
 #include "../server/session_manager.hpp"
 #include "../client/client_comm_manager.hpp"
+
+user_address address1 = {
+    AF_INET,
+    4000,
+    999930,
+    {0,0,0,0,0,0,0,0}
+};
+
+user_address address2 = {
+    AF_INET,
+    30000,
+    190930,
+    {0,0,0,0,0,0,0,0}
+};
+
+user_address address3 = {
+    AF_INET,
+    2050,
+    10930,
+    {0,0,0,0,0,0,0,0}
+};
 
 int create_test_users(user_p *test_users[]) {
     int total = 3;
@@ -94,7 +116,9 @@ bool persistence_test() {
         }
     }
 
-    free(test_users);
+    for (int i = 0; i < total; i++) {
+        free_user(test_users[i]);
+    }
 
     cout << "OK" << endl;
     return true;
@@ -173,24 +197,6 @@ bool session_manager_test() {
     char user[] = "jose";
     int result_code;
 
-    user_address address1;
-    address1.sin_family = AF_INET; // IPv4
-    address1.sin_addr.s_addr = 999930;
-    address1.sin_port = htons(4000);
-    bzero(&(address1.sin_zero), 8);  
-
-    user_address address2;
-    address2.sin_family = AF_INET; // IPv4
-    address2.sin_addr.s_addr = 190930;
-    address2.sin_port = htons(30000);
-    bzero(&(address2.sin_zero), 8);  
-
-    user_address address3;
-    address3.sin_family = AF_INET; // IPv4
-    address3.sin_addr.s_addr = 10930;
-    address3.sin_port = htons(2050);
-    bzero(&(address3.sin_zero), 8);  
-
     clear_all_users();
     init_session_manager();
 
@@ -257,24 +263,6 @@ bool session_manager_test() {
 bool follow_unfollow_test() {
     cout << "follow_unfollow_test... ";
 
-    user_address address1;
-    address1.sin_family = AF_INET; // IPv4
-    address1.sin_addr.s_addr = 999930;
-    address1.sin_port = htons(4000);
-    bzero(&(address1.sin_zero), 8);  
-
-    user_address address2;
-    address2.sin_family = AF_INET; // IPv4
-    address2.sin_addr.s_addr = 190930;
-    address2.sin_port = htons(30000);
-    bzero(&(address2.sin_zero), 8);  
-
-    user_address address3;
-    address3.sin_family = AF_INET; // IPv4
-    address3.sin_addr.s_addr = 10930;
-    address3.sin_port = htons(2050);
-    bzero(&(address3.sin_zero), 8);  
-
     char message[100];
     char user1[] = "jose";
     char user2[] = "gabriel";
@@ -330,12 +318,61 @@ bool follow_unfollow_test() {
     return true;
 }
 
+void notification_test_callback(uint16_t type, notification *notif, const user_address *cliaddr) {
+    cout << "notification_test_callback: " << endl;
+    print_notification(notif);
+    user_p target = find_user_by_address(cliaddr);
+    if (target == NULL) {
+        cout << "Target NULL" << endl;
+    } else {
+        cout << "Target " << target->username << endl;
+    }
+}
+
+bool notification_test() {
+    cout << "notification_test... ";
+
+    char message[100];
+    char user1[] = "jose";
+    char user2[] = "gabriel";
+    char user3[] = "matheus";
+    int result_code;
+
+    //////////////////////////////////
+    // Setup
+    clear_all_users();
+    init_session_manager();
+    pthread_t s = start_server_notif_mng();
+
+    login(user1, &address1, message);
+    login(user2, &address2, message);
+    login(user3, &address3, message);
+    follow(user1, user2, message);
+    follow(user1, user3, message);
+    follow(user2, user3, message);
+    register_callback(&notification_test_callback);
+    //////////////////////////////////
+    
+    producer_new_notification(find_user(user2), "Oi galera!");
+    producer_new_notification(find_user(user3), "E ai blz?");
+
+    // espera 2 segundo para garantir
+    timespec timeout;
+    timeout.tv_sec = time(NULL) + 2;
+    timeout.tv_nsec = 0;
+    pthread_timedjoin_np(s, NULL, &timeout);
+
+    cout << "OK" << endl;
+    return true;
+}
+
 int main(int argc, char **argv) {
     persistence_test();
     marshalling_packet_test();
     server_client_echo_test();
     session_manager_test();
     follow_unfollow_test();
+    notification_test();
 
     return 0;
 }

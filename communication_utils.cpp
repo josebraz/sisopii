@@ -47,6 +47,11 @@ void print_packet(const packet *message) {
         message->type, message->seqn, message->length, message->timestamp, message->payload);
 }
 
+void print_notification(const notification *message) {
+    printf("notification { id=%d, timestamp=%d, length=%d, pending=%d, author=\"%s\", message=\"%s\" }\n",
+        message->id, message->timestamp, message->length, message->pending, message->author, message->message);
+}
+
 void copy_packet(packet **dest, const packet *src) {
     *dest = (packet *) malloc(sizeof(packet));
     (*dest)->payload = (char *) calloc(src->length + 1, 1);
@@ -60,4 +65,20 @@ void copy_packet(packet **dest, const packet *src) {
 void free_packet(packet *p) {
     free(p->payload);
     free(p);
+}
+
+void free_notification(notification *notif) {
+    free(notif->author);
+    free(notif->message);
+    free(notif);
+}
+
+void free_user(user_p user) {
+    free(user->follows);
+    free(user->pending_msg);
+    for (int i = 0; i < user->addresses->size(); i++) {
+        free(user->addresses->at(i));
+    }
+    free(user->addresses);
+    free(user);
 }

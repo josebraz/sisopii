@@ -31,6 +31,7 @@
 #define PACKET_DATA_GENERAL_ERROR_T 202
 #define PACKET_DATA_FOLLOW_ERROR_T 203
 #define PACKET_DATA_UNFOLLOW_ERROR_T 204
+#define PACKET_DATA_UNAUTHENTICATED_T 250
 
 #define USER_MAX_SESSIONS 2
 
@@ -51,7 +52,8 @@ typedef struct __notification
     uint32_t timestamp;  // Timestamp da notificação
     uint16_t length;     // Tamanho da mensagem
     uint16_t pending;    // Quantidade de leitores pendentes
-    const char *_string; // Mensagem
+    char *author;        // Username author da mensagem
+    char *message;       // Mensagem
 } notification;
 
 typedef sockaddr_in user_address;
@@ -59,8 +61,9 @@ typedef sockaddr_in user_address;
 typedef struct __user
 {
     string username;
-    vector<string>* follows; // username de quem segue esse usuário
-    vector<user_address*>* addresses;
+    vector<string>* follows;          // username de quem segue esse usuário
+    vector<uint32_t>* pending_msg;     // id das notificações que falta receber
+    vector<user_address*>* addresses; // endereços das sessões atuais
 } user, *user_p;
 
 #endif

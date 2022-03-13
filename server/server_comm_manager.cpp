@@ -17,6 +17,7 @@
 #include "../communication_utils.hpp"
 #include "persistence.hpp"
 #include "server_comm_manager.hpp"
+#include "server_notif_manager.hpp"
 #include "session_manager.hpp"
 
 using namespace std;
@@ -54,13 +55,13 @@ pthread_t start_server(int port)
 }
 
 void *server_message_receiver(void *arg) {
-    struct sockaddr_in cliaddr;
+    user_address cliaddr;
     char buffer[PAYLOAD_MAX_SIZE];
     char result_message[RESULT_MESSAGE_MAX_SIZE];
     int n, result_code;
     packet *message;
 
-    socklen_t len = sizeof(struct sockaddr_in);
+    socklen_t len = sizeof(user_address);
 
     while (true)
     {
@@ -77,6 +78,7 @@ void *server_message_receiver(void *arg) {
             continue;
         }
 
+        // TODO: Fazer todo esse processamento em outra thread
         unmarshalling_packet(&message, buffer);
 
         if (message == NULL) {
@@ -87,37 +89,57 @@ void *server_message_receiver(void *arg) {
         printf("Server received: ");
         print_packet(message);
 
-        if (message->type == PACKET_CMD_ECHO_T) {
-            server_send_message(PACKET_CMD_ECHO_T, message->payload, (struct sockaddr *) &cliaddr);
-        } else if (message->type == PACKET_CMD_LOGIN_T) {
-            result_code = login(message->payload, &cliaddr, result_message);
-            server_send_message(result_code, result_message, (struct sockaddr *) &cliaddr);
-        } else if (message->type == PACKET_CMD_LOGOUT_T) {
-            result_code = logout(message->payload, &cliaddr, result_message);
-            server_send_message(result_code, result_message, (struct sockaddr *) &cliaddr);
-        } else if (message->type == PACKET_CMD_FOLLOW_T) {
-            user_p user_requester = find_user_by_address(&cliaddr);
-            const char *my_username;
-            if (user_requester == NULL) my_username = NULL; else my_username = user_requester->username.c_str();
-            result_code = follow(my_username, message->payload, result_message);
-            server_send_message(result_code, result_message, (struct sockaddr *) &cliaddr);
-        } else if (message->type == PACKET_CMD_UNFOLLOW_T) {
-            user_p user_requester = find_user_by_address(&cliaddr);
-            const char *my_username;
-            if (user_requester == NULL) my_username = NULL; else my_username = user_requester->username.c_str();
-            result_code = unfollow(my_username, message->payload, result_message);
-            server_send_message(result_code, result_message, (struct sockaddr *) &cliaddr);
-        } else if (message->type == PACKET_CMD_ALIVE_T) {
-
-        } else {
-            // TODO: implementar a lógica do request
+        user_p user_requester;
+        switch (message->type) {
+            case PACKET_CMD_ECHO_T:
+                server_send_message(PACKET_CMD_ECHO_T, message->payload, &cliaddr);
+                break;
+            case PACKET_CMD_LOGIN_T:
+                result_code = login(message->payload, &cliaddr, result_message);
+                server_send_message(result_code, result_message, &cliaddr);
+                break;
+            case PACKET_CMD_LOGOUT_T:
+                result_code = logout(message->payload, &cliaddr, result_message);
+                server_send_message(result_code, result_message, &cliaddr);
+                break;
+            case PACKET_CMD_ALIVE_T:
+                // TODO: o alive é uma mensagem que o cliente manda para informar
+                // o servidor que ainda será ativo
+                break;
+            case PACKET_CMD_FOLLOW_T:
+                user_requester = find_user_by_address(&cliaddr);
+                if (user_requester == NULL) {
+                    server_send_message(PACKET_DATA_UNAUTHENTICATED_T, (char *) "Acesso negado", &cliaddr);
+                } else {
+                    result_code = follow(user_requester->username.c_str(), message->payload, result_message);
+                    server_send_message(result_code, result_message, &cliaddr);
+                }
+                break;
+            case PACKET_CMD_UNFOLLOW_T:
+                user_requester = find_user_by_address(&cliaddr);
+                if (user_requester == NULL) {
+                    server_send_message(PACKET_DATA_UNAUTHENTICATED_T, (char *) "Acesso negado", &cliaddr);
+                } else {
+                    result_code = unfollow(user_requester->username.c_str(), message->payload, result_message);
+                    server_send_message(result_code, result_message, &cliaddr);
+                }
+                break;
+            case PACKET_CMD_NOTIFY_T:
+                user_requester = find_user_by_address(&cliaddr);
+                if (user_requester == NULL) {
+                    server_send_message(PACKET_DATA_UNAUTHENTICATED_T, (char *) "Acesso negado", &cliaddr);
+                } else {
+                    producer_new_notification(user_requester, message->payload);
+                }
+                break;
+            // TODO: implementar a lógica do request faltantes
         }
 
         free_packet(message);
     }
 }
 
-void server_send_message(uint16_t type, char *payload, const struct sockaddr *cliaddr) {
+void server_send_message(uint16_t type, char *payload, const user_address *cliaddr) {
     size_t payload_size = strlen(payload);
     char *buffer;
 
@@ -145,8 +167,8 @@ void server_send_message(uint16_t type, char *payload, const struct sockaddr *cl
             (const void *) buffer,
             message_size,
             0,
-            cliaddr,
-            sizeof(struct sockaddr_in));
+            (const sockaddr*) cliaddr,
+            sizeof(user_address));
 
         free(buffer);
 
