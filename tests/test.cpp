@@ -3,11 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
+#include <unistd.h>
 
 #include <iostream>
 #include <vector>
 #include <string>
-
 
 #include "../constants.h"
 #include "../types.hpp"
@@ -319,14 +319,41 @@ bool follow_unfollow_test() {
 }
 
 void notification_test_callback(uint16_t type, notification *notif, const user_address *cliaddr) {
-    cout << "notification_test_callback: " << endl;
-    print_notification(notif);
+    static int step = 0;
     user_p target = find_user_by_address(cliaddr);
-    if (target == NULL) {
-        cout << "Target NULL" << endl;
-    } else {
-        cout << "Target " << target->username << endl;
+
+    if (step == 0) {
+        if (!(notif->id == 1 && target->username.compare("jose") == 0)) {
+            cerr << "ERRO" << endl << "Notificação recebida errada no step " << step << endl;
+            exit(1);
+        }
+    } else if (step == 1) {
+        if (!(notif->id == 2 && target->username.compare("jose") == 0)) {
+            cerr << "ERRO" << endl << "Notificação recebida errada no step " << step << endl;
+            exit(1);
+        }
+    } else if (step == 2) {
+        if (!(notif->id == 3 && target->username.compare("jose") == 0)) {
+            cerr << "ERRO" << endl << "Notificação recebida errada no step " << step << endl;
+            exit(1);
+        }
+    } else if (step == 3) {
+        if (!(notif->id == 3 && target->username.compare("gabriel") == 0)) {
+            cerr << "ERRO" << endl << "Notificação recebida errada no step " << step << endl;
+            exit(1);
+        }
+    } else if (step == 4) {
+        if (!(notif->id == 0 && target->username.compare("matheus") == 0)) {
+            cerr << "ERRO" << endl << "Notificação recebida errada no step " << step << endl;
+            exit(1);
+        }
+    } else if (step == 5) {
+         if (!(notif->id == 4 && target->username.compare("matheus") == 0)) {
+            cerr << "ERRO" << endl << "Notificação recebida errada no step " << step << endl;
+            exit(1);
+        }
     }
+    step++;
 }
 
 bool notification_test() {
@@ -347,20 +374,28 @@ bool notification_test() {
     login(user1, &address1, message);
     login(user2, &address2, message);
     login(user3, &address3, message);
+
     follow(user1, user2, message);
     follow(user1, user3, message);
     follow(user2, user3, message);
+    follow(user3, user1, message);
+
+    logout(user3, &address3, message);
     register_callback(&notification_test_callback);
     //////////////////////////////////
     
+    producer_new_notification(find_user(user1), "Oi galeraaaa!");
     producer_new_notification(find_user(user2), "Oi galera!");
+    producer_new_notification(find_user(user2), "Como voces estão?");
     producer_new_notification(find_user(user3), "E ai blz?");
+    producer_new_notification(find_user(user1), "Tudo ótimo aqui!");
 
-    // espera 2 segundo para garantir
-    timespec timeout;
-    timeout.tv_sec = time(NULL) + 2;
-    timeout.tv_nsec = 0;
-    pthread_timedjoin_np(s, NULL, &timeout);
+    // depois o user3 loga e precisa receber a primeira notificação
+    usleep(500);
+    login(user3, &address3, message);
+
+    // espera um tempinho para garantir que o serviço já enviou tudo
+    usleep(500);
 
     cout << "OK" << endl;
     return true;

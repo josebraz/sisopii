@@ -13,7 +13,7 @@
 #include "../communication_utils.hpp" 
 #include "../types.hpp"
 
-#define MAX_PENDING_MSG 100
+#define MAX_PENDING_MSG 1000
 
 using namespace std;
 
@@ -91,40 +91,49 @@ bool send_to_all_addresses(const user_p user_follow, notification *message) {
 }
 
 void *consumer_notification(void *arg) {
+    int notif_index = 0;
     while (true) {
         pthread_mutex_lock(&mutex_notif);
         while(pending_notifications.size() <= 0)
             pthread_cond_wait(&cond_more, &mutex_notif);
-        
-        notification *current = pending_notifications.front();
-        user_p author = find_user(current->author);
 
-        for (int i = 0; current->pending != 0 && i < author->follows->size(); i++) {
+        notification *current_notif = pending_notifications.at(notif_index);
+        user_p author = find_user(current_notif->author);
+
+        for (int i = 0; current_notif->pending != 0 && i < author->follows->size(); i++) {
             user_p user_follow = find_user(author->follows->at(i).c_str());
             
             if (user_follow->pending_msg->empty()) continue;
 
             // verifica se esse usuário está esperando esta mensagem como próxima mensagem
-            bool pending_this = user_follow->pending_msg->front() == current->id;
+            bool pending_this = user_follow->pending_msg->front() == current_notif->id;
 
             // caso esteja, enviamos para todos os endereços ativos no momento
             if (pending_this && !user_follow->addresses->empty()) {
-                if (send_to_all_addresses(user_follow, current)) {
+                if (send_to_all_addresses(user_follow, current_notif)) {
                     user_follow->pending_msg->erase(user_follow->pending_msg->begin());
-                    current->pending -= 1;
+                    current_notif->pending -= 1;
                 }
             }
         }
 
         // caso não haja mais nenhum usuário que precise receber essa
         // notificação, ela é eliminada das notificações pendentes
-        if (current->pending == 0) {
-            pending_notifications.erase(pending_notifications.begin());
-            free_notification(current);
+        if (current_notif->pending == 0) {
+            pending_notifications.erase(pending_notifications.begin() + notif_index);
+            free_notification(current_notif);
+        } else {
+            notif_index++;
         }
         
         pthread_cond_signal(&cond_less);
         pthread_mutex_unlock(&mutex_notif);
+
+        if (pending_notifications.size() == 0) {
+            notif_index = 0;
+        } else {
+            notif_index %= pending_notifications.size();
+        }
     }
     
 }

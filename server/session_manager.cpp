@@ -22,6 +22,7 @@ void finalize_session_manager() {
     }
 }
 
+// TODO: fazer uma implementação com hashmap para ser O(1)
 user_p find_user(const char *username) {
     for (int i = 0; i < server_users_size; i++) {
         if (strcmp(server_users[i]->username.c_str(), username) == 0) {
