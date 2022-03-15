@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <pthread.h>
+#include <signal.h>
 
 #include <vector>
 #include <iostream>
@@ -22,11 +23,25 @@ vector<notification*> pending_notifications; // TODO: Carregar esse valor da per
 pthread_cond_t cond_more, cond_less;
 pthread_mutex_t mutex_notif;
 
-send_notif_callback_t send_callback;
+send_notif_callback_t send_notif_callback;
+
+void sig_handler(sig_atomic_t sig) {
+    // manda uma mensagem para todos os clientes conectados deslogando eles
+    for (int i = 0; i < server_users_size; i++) {
+        for (int j = 0; j < server_users[i]->addresses->size(); j++) {
+            user_address *addr = server_users[i]->addresses->at(j);
+            send_notif_callback(PACKET_CMD_END_SERVER, (char *)"Servidor finalizado", addr);
+        }
+    }
+
+    printf("\nServidor encerrado\n");
+    exit(1);
+}
 
 pthread_t start_server_notif_mng(send_notif_callback_t cb) {
-    send_callback = cb;
-    
+    send_notif_callback = cb;
+    signal(SIGINT, sig_handler);
+
     int ret;
     if (pthread_cond_init(&cond_more, NULL) != 0 || 
             pthread_cond_init(&cond_less, NULL) != 0) {
@@ -60,24 +75,24 @@ void producer_new_notification(const user_p author, const char *message) {
     new_notif->message = strdup(message);
     pending_notifications.push_back(new_notif);
 
-    // Marca todos os usuários que seguem o autor para receberem essa notificação
     user_p user_follow;
+    // Marca todos os usuários que seguem o autor para receberem essa notificação
     for (int i = 0; i < author->follows->size(); i++) {
         user_follow = find_user(author->follows->at(i).c_str());
         if (user_follow != NULL) {
             user_follow->pending_msg->push_back(notif_id);
         }
     }
-
+    
     pthread_cond_signal(&cond_more);
     pthread_mutex_unlock(&mutex_notif);
 }
 
-bool send_to_all_addresses(const user_p user_follow, notification *message) {
+bool send_to_all_addresses(const user_p user_follow, char *message) {
     bool send_success = false;
     for (int i = 0; i < user_follow->addresses->size(); i++) {
         user_address *addr = user_follow->addresses->at(i);
-        send_success = send_callback(PACKET_CMD_NOTIFY_T, message, addr) || send_success;
+        send_success = send_notif_callback(PACKET_CMD_NOTIFY_T, message, addr) || send_success;
     }
     return send_success;
 }
@@ -102,7 +117,7 @@ void *consumer_notification(void *arg) {
 
             // caso esteja, enviamos para todos os endereços ativos no momento
             if (pending_this && !user_follow->addresses->empty()) {
-                if (send_to_all_addresses(user_follow, current_notif)) {
+                if (send_to_all_addresses(user_follow, current_notif->message)) {
                     user_follow->pending_msg->erase(user_follow->pending_msg->begin());
                     current_notif->pending -= 1;
                 }

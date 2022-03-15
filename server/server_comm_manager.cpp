@@ -80,8 +80,14 @@ void dispatch_message(packet *message, user_address *cliaddr) {
             if (user_requester == NULL) {
                 server_send_message(PACKET_DATA_UNAUTHENTICATED_T, (char *) "Acesso negado", cliaddr, message->seqn);
             } else {
-                result_code = follow(user_requester->username.c_str(), message->payload, result_message);
+                char *user_to_follow = message->payload;
+                const char *requester_username = user_requester->username.c_str();
+                result_code = follow(requester_username, user_to_follow, result_message);
                 server_send_message(result_code, result_message, cliaddr, message->seqn);
+                if (result_code == PACKET_DATA_FOLLOW_OK_T) {
+                    char message[100] = "Novo Seguidor! ";
+                    send_to_all_addresses(find_user(user_to_follow), strcat(message, requester_username));
+                }
             }
             break;
         case PACKET_CMD_UNFOLLOW_T:
@@ -188,6 +194,6 @@ bool server_send_message(uint16_t type, char *payload, const user_address *cliad
     return true;
 }
 
-bool server_send_notif(uint16_t type, notification *payload, const user_address *cliaddr) {
-    return server_send_message(type, payload->message, cliaddr, server_next_seq_n++);
+bool server_send_notif(uint16_t type, char* payload, const user_address *cliaddr) {
+    return server_send_message(type, payload, cliaddr, server_next_seq_n++);
 }

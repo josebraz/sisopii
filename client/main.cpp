@@ -4,8 +4,6 @@
 #include "client_comm_manager.hpp"
 #include "presentation.hpp"
 
-using namespace std;
-
 int main(int argc, char **argv)
 {
     if (argc != 4) {

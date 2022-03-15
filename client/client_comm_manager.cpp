@@ -135,8 +135,19 @@ void *client_message_receiver(void *arg)
         if (is_response(message->type)) {
             signal_response(message);
         } else { // é uma notificação enviada pelo server
-            if (message->type == PACKET_CMD_NOTIFY_T) {
+            switch (message->type)
+            {
+            case PACKET_CMD_NOTIFY_T:
                 printf("Nova mensagem: %s\n", message->payload);
+                break;
+            case PACKET_CMD_NEW_FOLLOW_T:
+                printf("Novo seguidor! %s\n", message->payload);
+            case PACKET_CMD_END_SERVER:
+                printf("Servidor finalizado...\n");
+                exit(1);
+                break;
+            default:
+                break;
             }
         }
 
@@ -177,13 +188,12 @@ packet *client_send_message(uint16_t type, char *payload)
             0,
             (const struct sockaddr *)&servaddr,
             sizeof(struct sockaddr_in));
-        
-        free(buffer);
 
         if (size == -1)
         {
             log_error("Mensagem não enviada");
         } else {
+            free(buffer);
             return wait_response(message.seqn);
         }
     }

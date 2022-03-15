@@ -1,9 +1,14 @@
 #ifndef SESSION_MANAGER_H
 #define SESSION_MANAGER_H
 
+#define USER_SESSION_MAX_SIZE 1000
+
 #include <stdint.h>
 
 #include "../types.hpp"
+
+static int server_users_size = 0;
+static user_p server_users[USER_SESSION_MAX_SIZE];
 
 void init_session_manager();
 

@@ -43,13 +43,21 @@ void unmarshalling_packet(packet **message, const char *buffer) {
 }
 
 void print_packet(const packet *message) {
-    printf("packet { type=%d, seqn=%d, length=%d, timestamp=%d, payload=\"%s\" }\n",
-        message->type, message->seqn, message->length, message->timestamp, message->payload);
+    if (message == NULL) {
+        printf("packet NULL\n");
+    } else {
+        printf("packet { type=%d, seqn=%d, length=%d, timestamp=%d, payload=\"%s\" }\n",
+            message->type, message->seqn, message->length, message->timestamp, message->payload);
+    }
 }
 
 void print_notification(const notification *message) {
-    printf("notification { id=%d, timestamp=%d, length=%d, pending=%d, author=\"%s\", message=\"%s\" }\n",
-        message->id, message->timestamp, message->length, message->pending, message->author, message->message);
+    if (message == NULL) {
+        printf("notification NULL\n");
+    } else {
+        printf("notification { id=%d, timestamp=%d, length=%d, pending=%d, author=\"%s\", message=\"%s\" }\n",
+            message->id, message->timestamp, message->length, message->pending, message->author, message->message);
+    }
 }
 
 void copy_packet(packet **dest, const packet *src) {
@@ -63,24 +71,30 @@ void copy_packet(packet **dest, const packet *src) {
 }
 
 void free_packet(packet *p) {
-    free(p->payload);
-    free(p);
+    if (p != NULL) {
+        free(p->payload);
+        free(p);
+    }
 }
 
 void free_notification(notification *notif) {
-    free(notif->author);
-    free(notif->message);
-    free(notif);
+    if (notif != NULL) {
+        free(notif->author);
+        free(notif->message);
+        free(notif);
+    }
 }
 
 void free_user(user_p user) {
-    free(user->follows);
-    free(user->pending_msg);
-    for (int i = 0; i < user->addresses->size(); i++) {
-        free(user->addresses->at(i));
+    if (user != NULL) {
+        free(user->follows);
+        free(user->pending_msg);
+        for (int i = 0; i < user->addresses->size(); i++) {
+            free(user->addresses->at(i));
+        }
+        free(user->addresses);
+        free(user);
     }
-    free(user->addresses);
-    free(user);
 }
 
 bool is_response(uint32_t type) {

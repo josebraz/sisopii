@@ -8,8 +8,8 @@
 int main()
 {
     printf("Iniciando o server...\n");
-    init_session_manager();
 
+    init_session_manager();
     pthread_t notif_thread = start_server_notif_mng(&server_send_notif);
     pthread_t server_thread = start_server(SERVER_PORT);
 

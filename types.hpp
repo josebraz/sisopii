@@ -19,6 +19,8 @@
 #define PACKET_CMD_NEW_NOTIFY_T 5 // quando o client envia uma nova notificação
 #define PACKET_CMD_ECHO_T 6
 #define PACKET_CMD_NOTIFY_T 50    // quando o server envia uma notificação
+#define PACKET_CMD_NEW_FOLLOW_T 51    // quando o server envia uma notificação
+#define PACKET_CMD_END_SERVER 99  // quando o servidor está prestes a morrer
 
 // Tipos de dados que o usuário pode receber com status OK
 #define PACKET_DATA_NOTIFICATION_T 100
@@ -69,5 +71,7 @@ typedef struct __user
     vector<uint32_t>* pending_msg;     // id das notificações que falta receber
     vector<user_address*>* addresses; // endereços das sessões atuais
 } user, *user_p;
+
+typedef bool (*send_notif_callback_t)(uint16_t type, char *payload, const user_address *cliaddr);
 
 #endif

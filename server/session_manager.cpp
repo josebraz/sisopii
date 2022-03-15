@@ -1,16 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 
 #include "session_manager.hpp"
 #include "persistence.hpp"
 #include "../communication_utils.hpp"
 #include "../types.hpp"
-
-#define USER_SESSION_MAX_SIZE 1000
-
-static int server_users_size = 0;
-static user_p server_users[USER_SESSION_MAX_SIZE];
 
 void init_session_manager() {
     server_users_size = read_users(server_users);
@@ -135,7 +131,7 @@ int follow(const char *my_username, const char *followed, char *message) {
             }
             user_followed->follows->push_back(my_username);
             write_users(server_users, server_users_size);
-            strcpy(message, "Usuário seguido com sucesso");
+            strcpy(message, "Usuário seguido com sucesso!");
             return PACKET_DATA_FOLLOW_OK_T;
         }
     }

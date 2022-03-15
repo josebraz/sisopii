@@ -1,13 +1,25 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 
 #include "presentation.hpp"
 #include "../constants.h"
 #include "../logs.hpp"
 #include "client_comm_manager.hpp"
 
+char *my_user_g;
+
+void sig_handler(sig_atomic_t sig) {
+    send_logout_msg(my_user_g);
+    printf("\nSessão encerrada, até a próxima :)\n");
+    exit(1);
+}
+
 void start_presentation(char *my_user) {
+    my_user_g = my_user;
+    signal(SIGINT, sig_handler);
+
     size_t bufsize = PAYLOAD_MAX_SIZE;
     size_t characters;
     char *user_input = (char *)malloc(bufsize * sizeof(char));
