@@ -58,16 +58,19 @@ int create_test_users(user_p *test_users[]) {
     user1->username = "user1";
     user1->follows = followers1;
     user1->addresses = new vector<user_address*>();
+    user1->pending_msg = new vector<uint32_t>();
 
     user_p user2 = new user();
     user2->username = "user2";
     user2->follows = followers2;
     user2->addresses = new vector<user_address*>();
+    user2->pending_msg = new vector<uint32_t>();
 
     user_p user3 = new user();
     user3->username = "user3";
     user3->follows = followers3;
     user3->addresses = new vector<user_address*>();
+    user3->pending_msg = new vector<uint32_t>();
 
     *test_users = new user_p[total];
 
@@ -318,37 +321,37 @@ bool follow_unfollow_test() {
     return true;
 }
 
-bool notification_test_callback(uint16_t type, notification *notif, const user_address *cliaddr) {
+bool notification_test_callback(uint16_t type, char *notif, const user_address *cliaddr) {
     static int step = 0;
     user_p target = find_user_by_address(cliaddr);
 
     if (step == 0) {
-        if (!(notif->id == 1 && target->username.compare("jose") == 0)) {
+        if (!(target->username.compare("jose") == 0)) {
             cerr << "ERRO" << endl << "Notificação recebida errada no step " << step << endl;
             exit(1);
         }
     } else if (step == 1) {
-        if (!(notif->id == 2 && target->username.compare("jose") == 0)) {
+        if (!(target->username.compare("jose") == 0)) {
             cerr << "ERRO" << endl << "Notificação recebida errada no step " << step << endl;
             exit(1);
         }
     } else if (step == 2) {
-        if (!(notif->id == 3 && target->username.compare("jose") == 0)) {
+        if (!(target->username.compare("jose") == 0)) {
             cerr << "ERRO" << endl << "Notificação recebida errada no step " << step << endl;
             exit(1);
         }
     } else if (step == 3) {
-        if (!(notif->id == 3 && target->username.compare("gabriel") == 0)) {
+        if (!(target->username.compare("gabriel") == 0)) {
             cerr << "ERRO" << endl << "Notificação recebida errada no step " << step << endl;
             exit(1);
         }
     } else if (step == 4) {
-        if (!(notif->id == 0 && target->username.compare("matheus") == 0)) {
+        if (!(target->username.compare("matheus") == 0)) {
             cerr << "ERRO" << endl << "Notificação recebida errada no step " << step << endl;
             exit(1);
         }
     } else if (step == 5) {
-         if (!(notif->id == 4 && target->username.compare("matheus") == 0)) {
+         if (!(target->username.compare("matheus") == 0)) {
             cerr << "ERRO" << endl << "Notificação recebida errada no step " << step << endl;
             exit(1);
         }

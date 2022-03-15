@@ -48,6 +48,7 @@ int read_users(user_p *users)
         read_user->username = username;
         read_user->follows = follows;
         read_user->addresses = new vector<user_address*>();
+        read_user->pending_msg = new vector<uint32_t>();
 
         users[i] = read_user;
     }
