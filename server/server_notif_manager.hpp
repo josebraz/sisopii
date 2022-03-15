@@ -3,12 +3,9 @@
 
 #include "../types.hpp"
 
-#ifdef TEST
-typedef void (*send_test_callback_t)(uint16_t type, notification *payload, const user_address *cliaddr);
-void register_callback(send_test_callback_t cb);
-#endif
+typedef bool (*send_notif_callback_t)(uint16_t type, notification *payload, const user_address *cliaddr);
 
-pthread_t start_server_notif_mng();
+pthread_t start_server_notif_mng(send_notif_callback_t cb);
 
 void producer_new_notification(const user_p author, const char *message);
 

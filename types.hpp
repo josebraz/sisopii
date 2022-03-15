@@ -8,14 +8,17 @@
 #include "stdint.h"
 #include "constants.h"
 
-// Tipos de comandos que o usuário pode enviar
+// Tipos de comandos que o usuário/server pode enviar
+// [0, 50) -> mensagem do user
+// [50, 100) -> mensagem enviada pelo server
 #define PACKET_CMD_LOGIN_T 0
 #define PACKET_CMD_LOGOUT_T 1
 #define PACKET_CMD_ALIVE_T 2
 #define PACKET_CMD_FOLLOW_T 3
 #define PACKET_CMD_UNFOLLOW_T 4
-#define PACKET_CMD_NOTIFY_T 5
-#define PACKET_CMD_ECHO_T 30
+#define PACKET_CMD_NEW_NOTIFY_T 5 // quando o client envia uma nova notificação
+#define PACKET_CMD_ECHO_T 6
+#define PACKET_CMD_NOTIFY_T 50    // quando o server envia uma notificação
 
 // Tipos de dados que o usuário pode receber com status OK
 #define PACKET_DATA_NOTIFICATION_T 100
@@ -24,6 +27,7 @@
 #define PACKET_DATA_GENERAL_OK_T 103
 #define PACKET_DATA_FOLLOW_OK_T 104
 #define PACKET_DATA_UNFOLLOW_OK_T 105
+#define PACKET_DATA_ECHO_RESP_T 106
 
 // Tipos de dados que o usuário pode receber com status ERROR
 #define PACKET_DATA_LOGIN_ERROR_T 200

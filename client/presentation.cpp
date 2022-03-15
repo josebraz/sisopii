@@ -8,15 +8,20 @@
 #include "client_comm_manager.hpp"
 
 void start_presentation(char *my_user) {
-    char user_input[PAYLOAD_MAX_SIZE];
+    size_t bufsize = PAYLOAD_MAX_SIZE;
+    size_t characters;
+    char *user_input = (char *)malloc(bufsize * sizeof(char));
 
     while (1) {
         printf("Digite um comando: ");
-        scanf("%s", user_input);
 
-        if (strlen(user_input) == 0) {
+        characters = getline(&user_input, &bufsize, stdin);
+
+        if (bufsize == 0) {
             continue;
         }
+
+        user_input[characters-1] = '\0'; // elimina o \n
 
         if (strncmp("FOLLOW", user_input, 6) == 0) {
             send_follow_msg(user_input + 7);
@@ -29,5 +34,6 @@ void start_presentation(char *my_user) {
         } else {
             printf("Comando não reconhecido\n");
         }
+        user_input[0] = '\0';
     }
 }

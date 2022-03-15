@@ -19,4 +19,6 @@ void free_notification(notification *notif);
 
 void free_user(user_p u);
 
+bool is_response(uint32_t type);
+
 #endif

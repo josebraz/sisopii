@@ -82,3 +82,7 @@ void free_user(user_p user) {
     free(user->addresses);
     free(user);
 }
+
+bool is_response(uint32_t type) {
+    return type >= 100 && type <= 300;
+}

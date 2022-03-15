@@ -132,7 +132,13 @@ void *client_message_receiver(void *arg)
         printf("Client received: "); 
         print_packet(message);
 
-        signal_response(message);
+        if (is_response(message->type)) {
+            signal_response(message);
+        } else { // é uma notificação enviada pelo server
+            if (message->type == PACKET_CMD_NOTIFY_T) {
+                printf("Nova mensagem: %s\n", message->payload);
+            }
+        }
 
         free_packet(message);
     }
@@ -186,7 +192,7 @@ packet *client_send_message(uint16_t type, char *payload)
 
 int send_echo_msg(char *text) {
     packet *message = client_send_message(PACKET_CMD_ECHO_T, text);
-    if (message != NULL && message->type == PACKET_CMD_ECHO_T) {
+    if (message != NULL && message->type == PACKET_DATA_ECHO_RESP_T) {
         return 1;
     } else {
         return 0;
@@ -220,5 +226,5 @@ void send_unfollow_msg(char *user) {
 }
 
 void send_notify_msg(char *message) {
-    client_send_message(PACKET_CMD_NOTIFY_T, message);
+    client_send_message(PACKET_CMD_NEW_NOTIFY_T, message);
 }

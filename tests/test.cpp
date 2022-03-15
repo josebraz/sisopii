@@ -318,7 +318,7 @@ bool follow_unfollow_test() {
     return true;
 }
 
-void notification_test_callback(uint16_t type, notification *notif, const user_address *cliaddr) {
+bool notification_test_callback(uint16_t type, notification *notif, const user_address *cliaddr) {
     static int step = 0;
     user_p target = find_user_by_address(cliaddr);
 
@@ -354,6 +354,7 @@ void notification_test_callback(uint16_t type, notification *notif, const user_a
         }
     }
     step++;
+    return true;
 }
 
 bool notification_test() {
@@ -369,7 +370,7 @@ bool notification_test() {
     // Setup
     clear_all_users();
     init_session_manager();
-    pthread_t s = start_server_notif_mng();
+    pthread_t s = start_server_notif_mng(&notification_test_callback);
 
     login(user1, &address1, message);
     login(user2, &address2, message);
@@ -381,7 +382,6 @@ bool notification_test() {
     follow(user3, user1, message);
 
     logout(user3, &address3, message);
-    register_callback(&notification_test_callback);
     //////////////////////////////////
     
     producer_new_notification(find_user(user1), "Oi galeraaaa!");

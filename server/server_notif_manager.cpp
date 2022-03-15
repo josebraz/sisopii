@@ -8,7 +8,6 @@
 #include <iostream>
 
 #include "server_notif_manager.hpp"
-#include "server_comm_manager.hpp"
 #include "session_manager.hpp"
 #include "../communication_utils.hpp" 
 #include "../types.hpp"
@@ -17,20 +16,17 @@
 
 using namespace std;
 
-uint32_t new_notif_id = 0; // TODO: Carregar esse valor da persistencia
+uint32_t next_notif_id = 0; // TODO: Carregar esse valor da persistencia
 vector<notification*> pending_notifications; // TODO: Carregar esse valor da persistencia
 
 pthread_cond_t cond_more, cond_less;
 pthread_mutex_t mutex_notif;
 
-#ifdef TEST
-send_test_callback_t send_test_callback;
-void register_callback(send_test_callback_t cb) {
-    send_test_callback = cb;
-}
-#endif
+send_notif_callback_t send_callback;
 
-pthread_t start_server_notif_mng() {
+pthread_t start_server_notif_mng(send_notif_callback_t cb) {
+    send_callback = cb;
+    
     int ret;
     if (pthread_cond_init(&cond_more, NULL) != 0 || 
             pthread_cond_init(&cond_less, NULL) != 0) {
@@ -54,7 +50,7 @@ void producer_new_notification(const user_p author, const char *message) {
     while (pending_notifications.size() >= MAX_PENDING_MSG)
         pthread_cond_wait(&cond_less, &mutex_notif);
 
-    uint32_t notif_id = new_notif_id++;
+    uint32_t notif_id = next_notif_id++;
     notification *new_notif = new notification();
     new_notif->id = notif_id;
     new_notif->length = strlen(message);
@@ -80,12 +76,8 @@ void producer_new_notification(const user_p author, const char *message) {
 bool send_to_all_addresses(const user_p user_follow, notification *message) {
     bool send_success = false;
     for (int i = 0; i < user_follow->addresses->size(); i++) {
-        #ifdef TEST
-        send_test_callback(PACKET_CMD_NOTIFY_T, message, user_follow->addresses->at(i));
-        #else
-        server_send_message(PACKET_CMD_NOTIFY_T, message->message, user_follow->addresses->at(i));
-        #endif
-        send_success = true;
+        user_address *addr = user_follow->addresses->at(i);
+        send_success = send_callback(PACKET_CMD_NOTIFY_T, message, addr) || send_success;
     }
     return send_success;
 }
