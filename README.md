@@ -9,21 +9,21 @@ Faz parte da cadeira de Sistemas Operacionais II na UFRGS. Consiste basicamente 
 * Carregar a persistência quando iniciar o servidor - OK
 * Abrir um servidor UDP - OK
 * Gerenciador de sessões de usuários (iniciar sessão, máximo duas por usuário) - OK
-* Fazer o dispatcher das notificações (enviar para todos os seguidores atua is do usuário)
-* Enviar as notificações pendentes desde a última sessão iniciada (cuidar caso com duas sessões ativas)
+* Fazer o dispatcher das notificações (enviar para todos os seguidores atua is do usuário) - OK
+* Enviar as notificações pendentes desde a última sessão iniciada (cuidar caso com duas sessões ativas) - OK
 
 #### Cliente
 * Abrir um cliente UDP - OK
 * Parametros de inicialização - OK
 * Iniciar uma sessão no servidor (informando usuário) - OK
-* Seguir um outro usuário (para receber notificações dele)
-* Possibilidade de postar (enviar notificação)
+* Seguir um outro usuário (para receber notificações dele) - OK
+* Possibilidade de postar (enviar notificação) - OK
 
 ### Implementação
 * Organizar em uma estrutura de módulos - OK
 * Funções de marshalling e unmarshalling - OK
 * Lógica de esperar pela resposta do servidor após enviar mensagem - OK
-* Para cada cliente, ter uma instância de um Produtor-Consumidor de notificações em que:
+* Para cada cliente, ter uma instância de um Produtor-Consumidor de notificações em que: - OK
     * Produzir: Receber a notificação do enviada do cliente, atualizar a 
     lista de notificação pendentes de envio, para cada servidor atualizar 
     a fila de notificações pendentes de envio.

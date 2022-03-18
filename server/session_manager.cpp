@@ -16,6 +16,7 @@ void finalize_session_manager() {
     for (int i = 0; i < server_users_size; i++) {
         free_user(server_users[i]);
     }
+    server_users_size = 0;
 }
 
 // TODO: fazer uma implementação com hashmap para ser O(1)
@@ -61,6 +62,8 @@ int login(const char *username, const user_address *address, char *message) {
             user_address* new_address = new user_address();
             memcpy(new_address, address, sizeof(user_address));
             local_user->addresses->push_back(new_address);
+            local_user->addr_seqn = new vector<uint16_t>();
+            local_user->addr_seqn->push_back((uint16_t) 0);
             local_user->pending_msg = new vector<uint32_t>();
 
             server_users[server_users_size++] = local_user;
@@ -85,6 +88,7 @@ int login(const char *username, const user_address *address, char *message) {
                 user_address* new_address = new user_address();
                 memcpy(new_address, address, sizeof(user_address));
                 local_user->addresses->push_back(new_address);
+                local_user->addr_seqn->push_back((uint16_t) 0);
 
                 strcpy(message, "Login OK!");
                 return PACKET_DATA_LOGIN_OK_T;
@@ -106,6 +110,7 @@ int logout(const char *username, const user_address *address, char *message) {
         } else {
             user_address *current = local_user->addresses->at(fold_index);
             local_user->addresses->erase(local_user->addresses->begin() + fold_index);
+            local_user->addr_seqn->erase(local_user->addr_seqn->begin() + fold_index);
             free(current);
             strcpy(message, "Usuário desconectado com sucesso");
             return PACKET_DATA_LOGOUT_OK_T;
@@ -125,7 +130,7 @@ int follow(const char *my_username, const char *followed, char *message) {
         } else {
             for (int i = 0; i < user_followed->follows->size(); i++) {
                 if (user_followed->follows->at(i).compare(my_username) == 0) {
-                    strcpy(message, "Voçê já segue esse usuário!");
+                    strcpy(message, "Você já segue esse usuário!");
                     return PACKET_DATA_FOLLOW_ERROR_T;
                 }
             }

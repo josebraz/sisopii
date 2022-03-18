@@ -7,6 +7,10 @@ size_t marshalling_packet(const packet *message, char **buffer);
 
 void unmarshalling_packet(packet **message, const char *buffer);
 
+size_t marshalling_notification(const notification *message, char **buffer);
+
+void unmarshalling_notification(notification **message, const char *buffer);
+
 void print_packet(const packet *message);
 
 void print_notification(const notification *message);

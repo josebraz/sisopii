@@ -40,6 +40,13 @@ user_address address3 = {
     {0,0,0,0,0,0,0,0}
 };
 
+user_address address4 = {
+    AF_INET,
+    2053,
+    10400,
+    {0,0,0,0,0,0,0,0}
+};
+
 int create_test_users(user_p *test_users[]) {
     int total = 3;
 
@@ -58,18 +65,21 @@ int create_test_users(user_p *test_users[]) {
     user1->username = "user1";
     user1->follows = followers1;
     user1->addresses = new vector<user_address*>();
+    user1->addr_seqn = new vector<uint16_t>();
     user1->pending_msg = new vector<uint32_t>();
 
     user_p user2 = new user();
     user2->username = "user2";
     user2->follows = followers2;
     user2->addresses = new vector<user_address*>();
+    user2->addr_seqn = new vector<uint16_t>();
     user2->pending_msg = new vector<uint32_t>();
 
     user_p user3 = new user();
     user3->username = "user3";
     user3->follows = followers3;
     user3->addresses = new vector<user_address*>();
+    user3->addr_seqn = new vector<uint16_t>();
     user3->pending_msg = new vector<uint32_t>();
 
     *test_users = new user_p[total];
@@ -172,6 +182,64 @@ bool marshalling_packet_test() {
     return true;
 }
 
+bool marshalling_notification_test() {
+    cout << "marshalling_notification_test... ";
+
+    notification *readed_message;
+    char *buffer;
+    char payload[] = "TESTEEE";
+    char author[] = "josebraz";
+
+    notification original_message = {
+        1, 
+        (uint32_t) time(NULL), 
+        (uint16_t) strlen(payload), 
+        0,
+        (uint16_t) strlen(author), 
+        author,
+        payload
+    };
+
+    size_t message_size = marshalling_notification(&original_message, &buffer);
+    unmarshalling_notification(&readed_message, buffer);
+
+    if (readed_message->id != original_message.id) {
+        cerr << "ERRO" << endl << "Not same id " << readed_message->id << " != " << original_message.id << endl;
+        return false;
+    }
+
+    if (readed_message->timestamp != original_message.timestamp) {
+        cerr << "ERRO" << endl << "Not same timestamp " << readed_message->timestamp << " != " << original_message.timestamp << endl;
+        return false;
+    }
+
+    if (readed_message->length != original_message.length) {
+        cerr << "ERRO" << endl << "Not same length " << readed_message->length << " != " << original_message.length << endl;
+        return false;
+    }
+
+    if (readed_message->author_len != original_message.author_len) {
+        cerr << "ERRO" << endl << "Not same author_len " << readed_message->author_len << " != " << original_message.author_len << endl;
+        return false;
+    }
+
+    if (strcmp(readed_message->author, original_message.author) != 0) {
+        cerr << "ERRO" << endl << "Not same author " << readed_message->author << " != " << original_message.author << endl;
+        return false;
+    }
+
+    if (strcmp(readed_message->message, original_message.message) != 0) {
+        cerr << "ERRO" << endl << "Not same message " << readed_message->message << " != " << original_message.message << endl;
+        return false;
+    }
+
+    free_notification(readed_message);
+    free(buffer);
+
+    cout << "OK" << endl;
+    return true;
+}
+
 bool server_client_echo_test() {
     cout << "server_client_echo_test... ";
 
@@ -259,6 +327,8 @@ bool session_manager_test() {
         return false;
     }
 
+    finalize_session_manager();
+
     cout << "OK" << endl;
     return true;
 }
@@ -317,46 +387,61 @@ bool follow_unfollow_test() {
         return false;
     }
 
+    finalize_session_manager();
+
     cout << "OK" << endl;
     return true;
 }
 
-bool notification_test_callback(uint16_t type, char *notif, const user_address *cliaddr) {
-    static int step = 0;
+static int step_callback = 0;
+
+bool notification_test_callback(uint16_t type, notification *notif, const user_address *cliaddr, const uint16_t seqn) {
     user_p target = find_user_by_address(cliaddr);
 
-    if (step == 0) {
-        if (!(target->username.compare("jose") == 0)) {
-            cerr << "ERRO" << endl << "Notificação recebida errada no step " << step << endl;
+    print_notification(notif);
+
+    if (step_callback == 0) {
+        if (!(target->username.compare("jose") == 0 && seqn == 0)) {
+            cerr << "ERRO" << endl << "Notificação recebida errada no step " << step_callback << " seqn " << seqn << endl;
             exit(1);
         }
-    } else if (step == 1) {
-        if (!(target->username.compare("jose") == 0)) {
-            cerr << "ERRO" << endl << "Notificação recebida errada no step " << step << endl;
+    } else if (step_callback == 1) {
+        if (!(target->username.compare("jose") == 0 && seqn == 1)) {
+            cerr << "ERRO" << endl << "Notificação recebida errada no step " << step_callback << " seqn " << seqn << endl;
             exit(1);
         }
-    } else if (step == 2) {
-        if (!(target->username.compare("jose") == 0)) {
-            cerr << "ERRO" << endl << "Notificação recebida errada no step " << step << endl;
+    } else if (step_callback == 2) {
+        if (!(target->username.compare("jose") == 0 && seqn == 2)) {
+            cerr << "ERRO" << endl << "Notificação recebida errada no step " << step_callback << " seqn " << seqn << endl;
             exit(1);
         }
-    } else if (step == 3) {
-        if (!(target->username.compare("gabriel") == 0)) {
-            cerr << "ERRO" << endl << "Notificação recebida errada no step " << step << endl;
+    } else if (step_callback == 3) {
+        if (!(target->username.compare("gabriel") == 0 && seqn == 0)) {
+            cerr << "ERRO" << endl << "Notificação recebida errada no step " << step_callback << " seqn " << seqn << endl;
             exit(1);
         }
-    } else if (step == 4) {
-        if (!(target->username.compare("matheus") == 0)) {
-            cerr << "ERRO" << endl << "Notificação recebida errada no step " << step << endl;
+    } else if (step_callback == 4) {
+        if (!(target->username.compare("matheus") == 0 && seqn == 0)) {
+            cerr << "ERRO" << endl << "Notificação recebida errada no step " << step_callback << " seqn " << seqn << endl;
             exit(1);
         }
-    } else if (step == 5) {
-         if (!(target->username.compare("matheus") == 0)) {
-            cerr << "ERRO" << endl << "Notificação recebida errada no step " << step << endl;
+    } else if (step_callback == 5) {
+         if (!(target->username.compare("matheus") == 0 && seqn == 1)) {
+            cerr << "ERRO" << endl << "Notificação recebida errada no step " << step_callback << " seqn " << seqn << endl;
+            exit(1);
+        }
+    } else if (step_callback == 6) {
+         if (!(target->username.compare("matheus") == 0 && seqn == 2)) {
+            cerr << "ERRO" << endl << "Notificação recebida errada no step " << step_callback << " seqn " << seqn << endl;
+            exit(1);
+        }
+    } else if (step_callback == 7) {
+         if (!(target->username.compare("matheus") == 0 && seqn == 0)) {
+            cerr << "ERRO" << endl << "Notificação recebida errada no step " << step_callback << " seqn " << seqn << endl;
             exit(1);
         }
     }
-    step++;
+    step_callback++;
     return true;
 }
 
@@ -397,8 +482,22 @@ bool notification_test() {
     usleep(500);
     login(user3, &address3, message);
 
+    // aqui o user3 loga de outro lugar e não pode receber outra notificação
+    usleep(500);
+    login(user3, &address4, message);
+    usleep(500);
+    
+    producer_new_notification(find_user(user1), "Bem vindo user3 (de novo?)!");
+
     // espera um tempinho para garantir que o serviço já enviou tudo
     usleep(500);
+
+    if (step_callback != 8) {
+        cerr << "ERRO" << endl << "Não recebemos todas as notificações " << step_callback << endl;
+        exit(1);
+    }
+
+    finalize_session_manager();
 
     cout << "OK" << endl;
     return true;
@@ -407,6 +506,7 @@ bool notification_test() {
 int main(int argc, char **argv) {
     persistence_test();
     marshalling_packet_test();
+    marshalling_notification_test();
     server_client_echo_test();
     session_manager_test();
     follow_unfollow_test();

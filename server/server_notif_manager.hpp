@@ -9,6 +9,6 @@ void producer_new_notification(const user_p author, const char *message);
 
 void *consumer_notification(void *arg);
 
-bool send_to_all_addresses(const user_p user_follow, char *message);
+bool send_to_all_addresses(const uint16_t type, const user_p user_follow, notification *message);
 
 #endif

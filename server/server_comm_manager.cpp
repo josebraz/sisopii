@@ -23,7 +23,6 @@
 using namespace std;
 
 int server_sockfd;
-uint16_t server_next_seq_n = 1;
 
 pthread_t start_server(int port)
 {
@@ -61,15 +60,15 @@ void dispatch_message(packet *message, user_address *cliaddr) {
     user_p user_requester;
     switch (message->type) {
         case PACKET_CMD_ECHO_T:
-            server_send_message(PACKET_DATA_ECHO_RESP_T, message->payload, cliaddr, message->seqn);
+            server_send_message(PACKET_DATA_ECHO_RESP_T, strlen(message->payload), message->payload, cliaddr, message->seqn);
             break;
         case PACKET_CMD_LOGIN_T:
             result_code = login(message->payload, cliaddr, result_message);
-            server_send_message(result_code, result_message, cliaddr, message->seqn);
+            server_send_message(result_code, strlen(result_message), result_message, cliaddr, message->seqn);
             break;
         case PACKET_CMD_LOGOUT_T:
             result_code = logout(message->payload, cliaddr, result_message);
-            server_send_message(result_code, result_message, cliaddr, message->seqn);
+            server_send_message(result_code, strlen(result_message), result_message, cliaddr, message->seqn);
             break;
         case PACKET_CMD_ALIVE_T:
             // TODO: o alive é uma mensagem que o cliente manda para informar
@@ -78,36 +77,40 @@ void dispatch_message(packet *message, user_address *cliaddr) {
         case PACKET_CMD_FOLLOW_T:
             user_requester = find_user_by_address(cliaddr);
             if (user_requester == NULL) {
-                server_send_message(PACKET_DATA_UNAUTHENTICATED_T, (char *) "Acesso negado", cliaddr, message->seqn);
+                strcpy(result_message, (char *) "Acesso negado");
+                server_send_message(PACKET_DATA_UNAUTHENTICATED_T, strlen(result_message), result_message, cliaddr, message->seqn);
             } else {
                 char *user_to_follow = message->payload;
                 const char *requester_username = user_requester->username.c_str();
                 result_code = follow(requester_username, user_to_follow, result_message);
-                server_send_message(result_code, result_message, cliaddr, message->seqn);
-                if (result_code == PACKET_DATA_FOLLOW_OK_T) {
-                    char message[100] = "Novo Seguidor! ";
-                    send_to_all_addresses(find_user(user_to_follow), strcat(message, requester_username));
-                }
+                server_send_message(result_code, strlen(result_message), result_message, cliaddr, message->seqn);
+                // if (result_code == PACKET_DATA_FOLLOW_OK_T) {
+                //     char message[100] = "Novo Seguidor! ";
+                //     send_to_all_addresses(PACKET_CMD_NOTIFY_T, find_user(user_to_follow), strcat(message, requester_username));
+                // }
             }
             break;
         case PACKET_CMD_UNFOLLOW_T:
             user_requester = find_user_by_address(cliaddr);
             if (user_requester == NULL) {
-                server_send_message(PACKET_DATA_UNAUTHENTICATED_T, (char *) "Acesso negado", cliaddr, message->seqn);
+                strcpy(result_message, (char *) "Acesso negado");
+                server_send_message(PACKET_DATA_UNAUTHENTICATED_T, strlen(result_message), result_message, cliaddr, message->seqn);
             } else {
                 result_code = unfollow(user_requester->username.c_str(), message->payload, result_message);
-                server_send_message(result_code, result_message, cliaddr, message->seqn);
+                server_send_message(result_code, strlen(result_message), result_message, cliaddr, message->seqn);
             }
             break;
         case PACKET_CMD_NEW_NOTIFY_T:
             user_requester = find_user_by_address(cliaddr);
             if (user_requester == NULL) {
-                server_send_message(PACKET_DATA_UNAUTHENTICATED_T, (char *) "Acesso negado", cliaddr, message->seqn);
+                strcpy(result_message, (char *) "Acesso negado");
+                server_send_message(PACKET_DATA_UNAUTHENTICATED_T, strlen(result_message), result_message, cliaddr, message->seqn);
             } else {
                 producer_new_notification(user_requester, message->payload);
+                strcpy(result_message, (char *) "Mensagem criada com sucesso!");
+                server_send_message(PACKET_DATA_NOTIFICATION_T, strlen(result_message), result_message, cliaddr, message->seqn);
             }
             break;
-        // TODO: implementar a lógica do request faltantes
     }
 }
 
@@ -142,17 +145,13 @@ void *server_message_receiver(void *arg) {
             continue;
         }
 
-        printf("Server received: ");
-        print_packet(message);
-
         dispatch_message(message, &cliaddr);
 
         free_packet(message);
     }
 }
 
-bool server_send_message(uint16_t type, char *payload, const user_address *cliaddr, const uint16_t seqn) {
-    size_t payload_size = strlen(payload);
+bool server_send_message(uint16_t type, size_t payload_size, char *payload, const user_address *cliaddr, const uint16_t seqn) {
     char *buffer;
 
     if (payload_size > PAYLOAD_MAX_SIZE)
@@ -169,9 +168,6 @@ bool server_send_message(uint16_t type, char *payload, const user_address *cliad
             (uint32_t) time(NULL),
             payload
         };
-
-        printf("Server send: "); 
-        print_packet(&message);
 
         size_t message_size = marshalling_packet(&message, &buffer);
 
@@ -194,6 +190,13 @@ bool server_send_message(uint16_t type, char *payload, const user_address *cliad
     return true;
 }
 
-bool server_send_notif(uint16_t type, char* payload, const user_address *cliaddr) {
-    return server_send_message(type, payload, cliaddr, server_next_seq_n++);
+bool server_send_notif(uint16_t type, notification *payload, const user_address *cliaddr, const uint16_t seqn) {
+    char *buffer;
+    size_t message_size = marshalling_notification(payload, &buffer);
+
+    bool sent = server_send_message(type, message_size, buffer, cliaddr, seqn);
+
+    free(buffer);
+
+    return sent;
 }

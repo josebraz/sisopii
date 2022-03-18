@@ -19,7 +19,6 @@
 #define PACKET_CMD_NEW_NOTIFY_T 5 // quando o client envia uma nova notificação
 #define PACKET_CMD_ECHO_T 6
 #define PACKET_CMD_NOTIFY_T 50    // quando o server envia uma notificação
-#define PACKET_CMD_NEW_FOLLOW_T 51    // quando o server envia uma notificação
 #define PACKET_CMD_END_SERVER 99  // quando o servidor está prestes a morrer
 
 // Tipos de dados que o usuário pode receber com status OK
@@ -58,6 +57,7 @@ typedef struct __notification
     uint32_t timestamp;  // Timestamp da notificação
     uint16_t length;     // Tamanho da mensagem
     uint16_t pending;    // Quantidade de leitores pendentes
+    uint16_t author_len; // Tamanho do nome do autor
     char *author;        // Username author da mensagem
     char *message;       // Mensagem
 } notification;
@@ -68,10 +68,12 @@ typedef struct __user
 {
     string username;
     vector<string>* follows;          // username de quem segue esse usuário
-    vector<uint32_t>* pending_msg;     // id das notificações que falta receber
+    // Começa dados efemeros (que não são persistidos)
+    vector<uint32_t>* pending_msg;    // id das notificações que falta receber
     vector<user_address*>* addresses; // endereços das sessões atuais
+    vector<uint16_t>* addr_seqn;       // proximos numeros de sequencia do endereço de mesmo indice
 } user, *user_p;
 
-typedef bool (*send_notif_callback_t)(uint16_t type, char *payload, const user_address *cliaddr);
+typedef bool (*send_notif_callback_t)(uint16_t type, notification *payload, const user_address *cliaddr, const uint16_t seqn);
 
 #endif

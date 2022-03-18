@@ -11,6 +11,7 @@
 #include <time.h>
 
 #include "client_comm_manager.hpp"
+#include "presentation.hpp"
 #include "../constants.h"
 #include "../logs.hpp"
 #include "../types.hpp"
@@ -105,6 +106,7 @@ void *client_message_receiver(void *arg)
 {
     char buffer[PAYLOAD_MAX_SIZE];
     packet *message;
+    notification* notif;
     int n, len;
 
     while (true)
@@ -129,19 +131,18 @@ void *client_message_receiver(void *arg)
             continue;
         }
 
-        printf("Client received: "); 
-        print_packet(message);
-
         if (is_response(message->type)) {
             signal_response(message);
         } else { // é uma notificação enviada pelo server
             switch (message->type)
             {
             case PACKET_CMD_NOTIFY_T:
-                printf("Nova mensagem: %s\n", message->payload);
+                unmarshalling_notification(&notif, message->payload);
+                if (notif != NULL) {
+                    on_new_notification(notif);
+                }
+                free_notification(notif);
                 break;
-            case PACKET_CMD_NEW_FOLLOW_T:
-                printf("Novo seguidor! %s\n", message->payload);
             case PACKET_CMD_END_SERVER:
                 printf("Servidor finalizado...\n");
                 exit(1);
@@ -176,9 +177,6 @@ packet *client_send_message(uint16_t type, char *payload)
             payload
         };
 
-        printf("Client send: "); 
-        print_packet(&message);
-
         size_t message_size = marshalling_packet(&message, &buffer);
 
         ssize_t size = sendto(
@@ -209,9 +207,9 @@ int send_echo_msg(char *text) {
     }
 }
 
-int send_login_msg(char *username) {
+int send_login_msg(char *username, char *result) {
     packet *message = client_send_message(PACKET_CMD_LOGIN_T, username);
-    print_packet(message);
+    strcpy(result, message->payload);
     if (message != NULL && message->type == PACKET_DATA_LOGIN_OK_T) {
         return 1;
     } else {
@@ -219,22 +217,48 @@ int send_login_msg(char *username) {
     }
 }
 
-void send_logout_msg(char *user) {
-    client_send_message(PACKET_CMD_LOGOUT_T, user);
+int send_logout_msg(char *user, char *result) {
+    packet *message = client_send_message(PACKET_CMD_LOGOUT_T, user);
+    strcpy(result, message->payload);
+    if (message != NULL && message->type == PACKET_DATA_LOGOUT_OK_T) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
-void send_alive_msg(char *user) {
-    client_send_message(PACKET_CMD_ALIVE_T, user);
+int send_follow_msg(char *user, char *result) {
+    packet *message = client_send_message(PACKET_CMD_FOLLOW_T, user);
+    strcpy(result, message->payload);
+    if (message != NULL && message->type == PACKET_DATA_FOLLOW_OK_T) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
-void send_follow_msg(char *user) {
-    client_send_message(PACKET_CMD_FOLLOW_T, user);
+int send_unfollow_msg(char *user, char *result) {
+    packet *message = client_send_message(PACKET_CMD_UNFOLLOW_T, user);
+    strcpy(result, message->payload);
+    if (message != NULL && message->type == PACKET_DATA_UNFOLLOW_OK_T) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
-void send_unfollow_msg(char *user) {
-    client_send_message(PACKET_CMD_UNFOLLOW_T, user);
+int send_notify_msg(char *message, char *result) {
+    packet *pack = client_send_message(PACKET_CMD_NEW_NOTIFY_T, message);
+    strcpy(result, pack->payload);
+    if (pack != NULL && pack->type == PACKET_DATA_NOTIFICATION_T) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
-void send_notify_msg(char *message) {
-    client_send_message(PACKET_CMD_NEW_NOTIFY_T, message);
-}
+// void send_alive_msg(char *user) {
+//     client_send_message(PACKET_CMD_ALIVE_T, user);
+// }
+
+

@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <iostream>
+#include <string>
 
 #include "server_notif_manager.hpp"
 #include "session_manager.hpp"
@@ -17,21 +18,19 @@
 
 using namespace std;
 
-uint32_t next_notif_id = 0; // TODO: Carregar esse valor da persistencia
-vector<notification*> pending_notifications; // TODO: Carregar esse valor da persistencia
+uint32_t next_notif_id = 0;
+vector<notification*> pending_notifications;
 
 pthread_cond_t cond_more, cond_less;
 pthread_mutex_t mutex_notif;
+pthread_mutex_t mutex_send;
 
 send_notif_callback_t send_notif_callback;
 
-void sig_handler(sig_atomic_t sig) {
+void server_sig_handler(sig_atomic_t sig) {
     // manda uma mensagem para todos os clientes conectados deslogando eles
     for (int i = 0; i < server_users_size; i++) {
-        for (int j = 0; j < server_users[i]->addresses->size(); j++) {
-            user_address *addr = server_users[i]->addresses->at(j);
-            send_notif_callback(PACKET_CMD_END_SERVER, (char *)"Servidor finalizado", addr);
-        }
+        // send_to_all_addresses(PACKET_CMD_END_SERVER, server_users[i], (char *)"Servidor finalizado");
     }
 
     printf("\nServidor encerrado\n");
@@ -40,7 +39,7 @@ void sig_handler(sig_atomic_t sig) {
 
 pthread_t start_server_notif_mng(send_notif_callback_t cb) {
     send_notif_callback = cb;
-    signal(SIGINT, sig_handler);
+    signal(SIGINT, server_sig_handler);
 
     int ret;
     if (pthread_cond_init(&cond_more, NULL) != 0 || 
@@ -51,7 +50,13 @@ pthread_t start_server_notif_mng(send_notif_callback_t cb) {
 
     ret = pthread_mutex_init(&mutex_notif, NULL);
     if (ret != 0) {
-        perror("mutex init failed");
+        perror("mutex notif init failed");
+        exit(EXIT_FAILURE);
+    }
+
+    ret = pthread_mutex_init(&mutex_send, NULL);
+    if (ret != 0) {
+        perror("mutex send init failed");
         exit(EXIT_FAILURE);
     }
 
@@ -61,6 +66,8 @@ pthread_t start_server_notif_mng(send_notif_callback_t cb) {
 }
 
 void producer_new_notification(const user_p author, const char *message) {
+    if (author->follows->empty()) return;
+
     pthread_mutex_lock(&mutex_notif);
     while (pending_notifications.size() >= MAX_PENDING_MSG)
         pthread_cond_wait(&cond_less, &mutex_notif);
@@ -71,6 +78,7 @@ void producer_new_notification(const user_p author, const char *message) {
     new_notif->length = strlen(message);
     new_notif->timestamp = (uint32_t) time(NULL);
     new_notif->pending = author->follows->size();
+    new_notif->author_len = author->username.size();
     new_notif->author = strdup(author->username.c_str());
     new_notif->message = strdup(message);
     pending_notifications.push_back(new_notif);
@@ -88,11 +96,16 @@ void producer_new_notification(const user_p author, const char *message) {
     pthread_mutex_unlock(&mutex_notif);
 }
 
-bool send_to_all_addresses(const user_p user_follow, char *message) {
+bool send_to_all_addresses(const uint16_t type, const user_p user_follow, notification *message) {
     bool send_success = false;
     for (int i = 0; i < user_follow->addresses->size(); i++) {
         user_address *addr = user_follow->addresses->at(i);
-        send_success = send_notif_callback(PACKET_CMD_NOTIFY_T, message, addr) || send_success;
+        uint16_t next_seqn = user_follow->addr_seqn->at(i);
+        bool current_success = send_notif_callback(type, message, addr, next_seqn);
+        if (current_success) {
+            user_follow->addr_seqn->at(i) = next_seqn + 1;
+        }
+        send_success = current_success || send_success;
     }
     return send_success;
 }
@@ -101,7 +114,7 @@ void *consumer_notification(void *arg) {
     int notif_index = 0;
     while (true) {
         pthread_mutex_lock(&mutex_notif);
-        while(pending_notifications.size() <= 0)
+        while(pending_notifications.empty())
             pthread_cond_wait(&cond_more, &mutex_notif);
 
         notification *current_notif = pending_notifications.at(notif_index);
@@ -117,7 +130,7 @@ void *consumer_notification(void *arg) {
 
             // caso esteja, enviamos para todos os endereços ativos no momento
             if (pending_this && !user_follow->addresses->empty()) {
-                if (send_to_all_addresses(user_follow, current_notif->message)) {
+                if (send_to_all_addresses(PACKET_CMD_NOTIFY_T, user_follow, current_notif)) {
                     user_follow->pending_msg->erase(user_follow->pending_msg->begin());
                     current_notif->pending -= 1;
                 }
@@ -132,15 +145,15 @@ void *consumer_notification(void *arg) {
         } else {
             notif_index++;
         }
-        
-        pthread_cond_signal(&cond_less);
-        pthread_mutex_unlock(&mutex_notif);
 
         if (pending_notifications.size() == 0) {
             notif_index = 0;
         } else {
             notif_index %= pending_notifications.size();
         }
+        
+        pthread_cond_signal(&cond_less);
+        pthread_mutex_unlock(&mutex_notif);
     }
     
 }
