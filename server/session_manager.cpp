@@ -40,6 +40,7 @@ user_p find_user_by_address(const user_address *address) {
 
 int index_of_address(const user_p local_user, const user_address *address) {
     int fold_index = -1;
+    pthread_mutex_lock(&(local_user->mutex_addr));
     for (int i = 0; i < local_user->addresses->size(); i++) {
         user_address *current = local_user->addresses->at(i);
         if (current->sin_addr.s_addr == address->sin_addr.s_addr && 
@@ -48,6 +49,7 @@ int index_of_address(const user_p local_user, const user_address *address) {
             break;
         }
     }
+    pthread_mutex_unlock(&(local_user->mutex_addr));
     return fold_index;
 }
 
@@ -65,6 +67,7 @@ int login(const char *username, const user_address *address, char *message) {
             local_user->addr_seqn = new vector<uint16_t>();
             local_user->addr_seqn->push_back((uint16_t) 0);
             local_user->pending_msg = new vector<uint32_t>();
+            pthread_mutex_init(&(local_user->mutex_addr), NULL);
 
             server_users[server_users_size++] = local_user;
             write_users(server_users, server_users_size);
@@ -87,8 +90,11 @@ int login(const char *username, const user_address *address, char *message) {
             } else {
                 user_address* new_address = new user_address();
                 memcpy(new_address, address, sizeof(user_address));
+
+                pthread_mutex_lock(&(local_user->mutex_addr));
                 local_user->addresses->push_back(new_address);
                 local_user->addr_seqn->push_back((uint16_t) 0);
+                pthread_mutex_unlock(&(local_user->mutex_addr));
 
                 strcpy(message, "Login OK!");
                 return PACKET_DATA_LOGIN_OK_T;
@@ -108,9 +114,12 @@ int logout(const char *username, const user_address *address, char *message) {
             strcpy(message, "Usuário não encontrado");
             return PACKET_DATA_LOGOUT_ERROR_T;
         } else {
+            pthread_mutex_lock(&(local_user->mutex_addr));
             user_address *current = local_user->addresses->at(fold_index);
             local_user->addresses->erase(local_user->addresses->begin() + fold_index);
             local_user->addr_seqn->erase(local_user->addr_seqn->begin() + fold_index);
+            pthread_mutex_unlock(&(local_user->mutex_addr));
+
             free(current);
             strcpy(message, "Usuário desconectado com sucesso");
             return PACKET_DATA_LOGOUT_OK_T;

@@ -67,6 +67,7 @@ int create_test_users(user_p *test_users[]) {
     user1->addresses = new vector<user_address*>();
     user1->addr_seqn = new vector<uint16_t>();
     user1->pending_msg = new vector<uint32_t>();
+    pthread_mutex_init(&(user1->mutex_addr), NULL);
 
     user_p user2 = new user();
     user2->username = "user2";
@@ -74,6 +75,7 @@ int create_test_users(user_p *test_users[]) {
     user2->addresses = new vector<user_address*>();
     user2->addr_seqn = new vector<uint16_t>();
     user2->pending_msg = new vector<uint32_t>();
+    pthread_mutex_init(&(user2->mutex_addr), NULL);
 
     user_p user3 = new user();
     user3->username = "user3";
@@ -81,6 +83,7 @@ int create_test_users(user_p *test_users[]) {
     user3->addresses = new vector<user_address*>();
     user3->addr_seqn = new vector<uint16_t>();
     user3->pending_msg = new vector<uint32_t>();
+    pthread_mutex_init(&(user3->mutex_addr), NULL);
 
     *test_users = new user_p[total];
 

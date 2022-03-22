@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <string>
+#include <pthread.h>
 #include <netinet/in.h>
 
 #include "stdint.h"
@@ -71,7 +72,8 @@ typedef struct __user
     // Começa dados efemeros (que não são persistidos)
     vector<uint32_t>* pending_msg;    // id das notificações que falta receber
     vector<user_address*>* addresses; // endereços das sessões atuais
-    vector<uint16_t>* addr_seqn;       // proximos numeros de sequencia do endereço de mesmo indice
+    vector<uint16_t>* addr_seqn;      // proximos numeros de sequencia do endereço de mesmo indice
+    pthread_mutex_t mutex_addr;       // mutex usado para alteração concorrente dos endereços e seqn
 } user, *user_p;
 
 typedef bool (*send_notif_callback_t)(uint16_t type, notification *payload, const user_address *cliaddr, const uint16_t seqn);

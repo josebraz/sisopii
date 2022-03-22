@@ -98,6 +98,7 @@ void producer_new_notification(const user_p author, const char *message) {
 
 bool send_to_all_addresses(const uint16_t type, const user_p user_follow, notification *message) {
     bool send_success = false;
+    pthread_mutex_lock(&(user_follow->mutex_addr));
     for (int i = 0; i < user_follow->addresses->size(); i++) {
         user_address *addr = user_follow->addresses->at(i);
         uint16_t next_seqn = user_follow->addr_seqn->at(i);
@@ -107,6 +108,7 @@ bool send_to_all_addresses(const uint16_t type, const user_p user_follow, notifi
         }
         send_success = current_success || send_success;
     }
+    pthread_mutex_unlock(&(user_follow->mutex_addr));
     return send_success;
 }
 
@@ -129,7 +131,7 @@ void *consumer_notification(void *arg) {
             bool pending_this = user_follow->pending_msg->front() == current_notif->id;
 
             // caso esteja, enviamos para todos os endereços ativos no momento
-            if (pending_this && !user_follow->addresses->empty()) {
+            if (pending_this) {
                 if (send_to_all_addresses(PACKET_CMD_NOTIFY_T, user_follow, current_notif)) {
                     user_follow->pending_msg->erase(user_follow->pending_msg->begin());
                     current_notif->pending -= 1;
