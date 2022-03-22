@@ -4,16 +4,34 @@
 #include "client_comm_manager.hpp"
 #include "presentation.hpp"
 
+#define NC "\e[0m"
+#define RED "\e[0;31m"
+#define GRN "\e[0;32m"
+#define CYN "\e[0;36m"
+#define REDB "\e[41m"
+
+/*
+inicia um processo cliente
+    recebe como argumento 3 parametros, alem do padrao que indica o caminho da aplicacao:
+    1.  username    ->  fulano
+    2.  server      ->  localhost
+    3.  port        ->  8080
+*/
 int main(int argc, char **argv)
 {
+    // se não recebemos exatamente 4 argumentos (caminho + 3 parametros), jogamos um erro e terminamos o processo
     if (argc != 4) {
-        printf("Erro de sintaxe, use: %s username server port\n", argv[0]);
+        printf(RED "Erro de sintaxe.\n");
+        printf(NC "Use: path username server port\n");
+        printf(NC "Ex.: " GRN "%s fulaninho localhost 8080" NC " \n", argv[0]);
         exit(1);
     }
 
-    char *my_user = argv[1];
-    char *server_addr = argv[2];
-    int port = atoi(argv[3]);
+    // caso tenhamos todos os dados necessarios, os atribuimos as variaveis pertinentes
+    char *my_user = argv[1];        // username do cliente em questao
+    char *server_addr = argv[2];    // server que o cliente está se conectando
+    int port = atoi(argv[3]);       // porta usada para a comunicacao cliente <-> servidor
+
 
     start_client(server_addr, port);
 

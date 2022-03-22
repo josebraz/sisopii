@@ -9,15 +9,22 @@
 #include "../logs.hpp"
 #include "client_comm_manager.hpp"
 
+#define NC "\e[0m"
+#define RED "\e[0;31m"
+#define GRN "\e[0;32m"
+#define CYN "\e[0;36m"
+#define REDB "\e[41m"
+
 char *my_user_g;
 
 void presentation_sig_handler(sig_atomic_t sig) {
     char result[100];
     int ret = send_logout_msg(my_user_g, result);
     if (ret == 1) {
-        printf("\nSessão encerrada, até a próxima :)\n");
+        printf("\nSessão encerrada, até a próxima " CYN ":)" NC " \n");
     } else {
-        printf("\nImpossível encerrar a sessão: %s\n", result);
+        printf(RED "\nERRO:\n");
+        printf(NC "Impossível encerrar a sessão: %s\n", result);
     }
     exit(1);
 }
@@ -33,12 +40,12 @@ void start_presentation(char *my_user) {
     char result[PAYLOAD_MAX_SIZE];
 
     if (send_login_msg(my_user, result) == 0) {
-        printf("Erro no login (%s)! Finalizando...\n", result);
+        printf(RED "Erro no login: " NC "(%s)!\nFinalizando...", result);
         exit(1);
         return;
     }
 
-    printf("Bem vindo %s!\n", my_user);
+    printf("Bem vindo, %s!\n", my_user);
 
     while (1) {
         characters = getline(&user_input, &bufsize, stdin);
@@ -57,14 +64,14 @@ void start_presentation(char *my_user) {
             printf("BYE\n");
             break;
         } else {
-            printf("Comando não reconhecido\n");
+            printf(RED "ERRO:" NC "Comando não reconhecido" NC " \n");
             continue;
         }
 
         if (ret == 0) {
-            printf("ERRO: %s\n", result);
+            printf(RED "ERRO: " NC "%s\n", result);
         } else {
-            printf("OK\n");
+            printf(GRN "OK" NC " \n");
         }
 
         user_input[0] = '\0';
@@ -79,5 +86,5 @@ void on_new_notification(notification *notif) {
     char time_buffer[80];
     strftime(time_buffer, 80, "%d/%m/%Y - %H:%M", time_info);
 
-    printf("%s %s (%s)\n", notif->author, notif->message, time_buffer);
+    printf(GRN "Nova mensagem!\n" CYN "(%s) %s: " NC "%s\n", time_buffer, notif->author, notif->message);
 }
