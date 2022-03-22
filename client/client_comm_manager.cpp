@@ -209,7 +209,11 @@ int send_echo_msg(char *text) {
 
 int send_login_msg(char *username, char *result) {
     packet *message = client_send_message(PACKET_CMD_LOGIN_T, username);
-    strcpy(result, message->payload);
+    if (message != NULL) {
+        strcpy(result, message->payload);
+    } else {
+        strcpy(result, (char *) "Servidor indisponível");
+    }
     if (message != NULL && message->type == PACKET_DATA_LOGIN_OK_T) {
         return 1;
     } else {
@@ -219,7 +223,11 @@ int send_login_msg(char *username, char *result) {
 
 int send_logout_msg(char *user, char *result) {
     packet *message = client_send_message(PACKET_CMD_LOGOUT_T, user);
-    strcpy(result, message->payload);
+    if (message != NULL) {
+        strcpy(result, message->payload);
+    } else {
+        strcpy(result, (char *) "Servidor indisponível");
+    }
     if (message != NULL && message->type == PACKET_DATA_LOGOUT_OK_T) {
         return 1;
     } else {
@@ -229,7 +237,11 @@ int send_logout_msg(char *user, char *result) {
 
 int send_follow_msg(char *user, char *result) {
     packet *message = client_send_message(PACKET_CMD_FOLLOW_T, user);
-    strcpy(result, message->payload);
+    if (message != NULL) {
+        strcpy(result, message->payload);
+    } else {
+        strcpy(result, (char *) "Servidor indisponível");
+    }
     if (message != NULL && message->type == PACKET_DATA_FOLLOW_OK_T) {
         return 1;
     } else {
@@ -239,7 +251,11 @@ int send_follow_msg(char *user, char *result) {
 
 int send_unfollow_msg(char *user, char *result) {
     packet *message = client_send_message(PACKET_CMD_UNFOLLOW_T, user);
-    strcpy(result, message->payload);
+    if (message != NULL) {
+        strcpy(result, message->payload);
+    } else {
+        strcpy(result, (char *) "Servidor indisponível");
+    }
     if (message != NULL && message->type == PACKET_DATA_UNFOLLOW_OK_T) {
         return 1;
     } else {
@@ -249,16 +265,16 @@ int send_unfollow_msg(char *user, char *result) {
 
 int send_notify_msg(char *message, char *result) {
     packet *pack = client_send_message(PACKET_CMD_NEW_NOTIFY_T, message);
-    strcpy(result, pack->payload);
+    if (pack != NULL) {
+        strcpy(result, pack->payload);
+    } else {
+        strcpy(result, (char *) "Servidor indisponível");
+    }
     if (pack != NULL && pack->type == PACKET_DATA_NOTIFICATION_T) {
         return 1;
     } else {
         return 0;
     }
 }
-
-// void send_alive_msg(char *user) {
-//     client_send_message(PACKET_CMD_ALIVE_T, user);
-// }
 
 
