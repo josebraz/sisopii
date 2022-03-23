@@ -68,6 +68,7 @@ int create_test_users(user_p *test_users[]) {
     user1->addr_seqn = new vector<uint16_t>();
     user1->pending_msg = new vector<uint32_t>();
     pthread_mutex_init(&(user1->mutex_addr), NULL);
+    pthread_mutex_init(&(user1->mutex_follows), NULL);
 
     user_p user2 = new user();
     user2->username = "user2";
@@ -76,6 +77,7 @@ int create_test_users(user_p *test_users[]) {
     user2->addr_seqn = new vector<uint16_t>();
     user2->pending_msg = new vector<uint32_t>();
     pthread_mutex_init(&(user2->mutex_addr), NULL);
+    pthread_mutex_init(&(user2->mutex_follows), NULL);
 
     user_p user3 = new user();
     user3->username = "user3";
@@ -84,6 +86,7 @@ int create_test_users(user_p *test_users[]) {
     user3->addr_seqn = new vector<uint16_t>();
     user3->pending_msg = new vector<uint32_t>();
     pthread_mutex_init(&(user3->mutex_addr), NULL);
+    pthread_mutex_init(&(user3->mutex_follows), NULL);
 
     *test_users = new user_p[total];
 
@@ -399,47 +402,43 @@ bool follow_unfollow_test() {
 static int step_callback = 0;
 
 bool notification_test_callback(uint16_t type, notification *notif, const user_address *cliaddr, const uint16_t seqn) {
-    user_p target = find_user_by_address(cliaddr);
-
-    print_notification(notif);
-
     if (step_callback == 0) {
-        if (!(target->username.compare("jose") == 0 && seqn == 0)) {
+        if (!(strcmp(notif->author, (char *) "gabriel") == 0 && notif->id == 1)) {
             cerr << "ERRO" << endl << "Notificação recebida errada no step " << step_callback << " seqn " << seqn << endl;
             exit(1);
         }
     } else if (step_callback == 1) {
-        if (!(target->username.compare("jose") == 0 && seqn == 1)) {
+        if (!(strcmp(notif->author, (char *) "gabriel") == 0 && notif->id == 2)) {
             cerr << "ERRO" << endl << "Notificação recebida errada no step " << step_callback << " seqn " << seqn << endl;
             exit(1);
         }
     } else if (step_callback == 2) {
-        if (!(target->username.compare("jose") == 0 && seqn == 2)) {
+        if (!(strcmp(notif->author, (char *) "matheus") == 0 && notif->id == 3)) {
             cerr << "ERRO" << endl << "Notificação recebida errada no step " << step_callback << " seqn " << seqn << endl;
             exit(1);
         }
     } else if (step_callback == 3) {
-        if (!(target->username.compare("gabriel") == 0 && seqn == 0)) {
+        if (!(strcmp(notif->author, (char *) "matheus") == 0 && notif->id == 3)) {
             cerr << "ERRO" << endl << "Notificação recebida errada no step " << step_callback << " seqn " << seqn << endl;
             exit(1);
         }
     } else if (step_callback == 4) {
-        if (!(target->username.compare("matheus") == 0 && seqn == 0)) {
+        if (!(strcmp(notif->author, (char *) "jose") == 0 && notif->id == 0)) {
             cerr << "ERRO" << endl << "Notificação recebida errada no step " << step_callback << " seqn " << seqn << endl;
             exit(1);
         }
     } else if (step_callback == 5) {
-         if (!(target->username.compare("matheus") == 0 && seqn == 1)) {
+         if (!(strcmp(notif->author, (char *) "jose") == 0 && notif->id == 4)) {
             cerr << "ERRO" << endl << "Notificação recebida errada no step " << step_callback << " seqn " << seqn << endl;
             exit(1);
         }
     } else if (step_callback == 6) {
-         if (!(target->username.compare("matheus") == 0 && seqn == 2)) {
+         if (!(strcmp(notif->author, (char *) "jose") == 0 && notif->id == 5)) {
             cerr << "ERRO" << endl << "Notificação recebida errada no step " << step_callback << " seqn " << seqn << endl;
             exit(1);
         }
     } else if (step_callback == 7) {
-         if (!(target->username.compare("matheus") == 0 && seqn == 0)) {
+         if (!(strcmp(notif->author, (char *) "jose") == 0 && notif->id == 5)) {
             cerr << "ERRO" << endl << "Notificação recebida errada no step " << step_callback << " seqn " << seqn << endl;
             exit(1);
         }

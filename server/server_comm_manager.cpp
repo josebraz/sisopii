@@ -15,7 +15,6 @@
 #include "../types.hpp"
 #include "../logs.hpp"
 #include "../communication_utils.hpp"
-#include "persistence.hpp"
 #include "server_comm_manager.hpp"
 #include "server_notif_manager.hpp"
 #include "session_manager.hpp"
@@ -23,6 +22,8 @@
 using namespace std;
 
 int server_sockfd;
+
+void *server_message_receiver(void *arg);
 
 pthread_t start_server(int port)
 {

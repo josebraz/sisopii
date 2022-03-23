@@ -51,6 +51,7 @@ int read_users(user_p *users)
         read_user->addr_seqn = new vector<uint16_t>();
         read_user->pending_msg = new vector<uint32_t>();
         pthread_mutex_init(&(read_user->mutex_addr), NULL);
+        pthread_mutex_init(&(read_user->mutex_follows), NULL);
 
         users[i] = read_user;
     }

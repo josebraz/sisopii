@@ -19,7 +19,6 @@ void finalize_session_manager() {
     server_users_size = 0;
 }
 
-// TODO: fazer uma implementação com hashmap para ser O(1)
 user_p find_user(const char *username) {
     for (int i = 0; i < server_users_size; i++) {
         if (strcmp(server_users[i]->username.c_str(), username) == 0) {
@@ -68,6 +67,7 @@ int login(const char *username, const user_address *address, char *message) {
             local_user->addr_seqn->push_back((uint16_t) 0);
             local_user->pending_msg = new vector<uint32_t>();
             pthread_mutex_init(&(local_user->mutex_addr), NULL);
+            pthread_mutex_init(&(local_user->mutex_follows), NULL);
 
             server_users[server_users_size++] = local_user;
             write_users(server_users, server_users_size);
@@ -137,13 +137,18 @@ int follow(const char *my_username, const char *followed, char *message) {
             strcpy(message, "Usuário para seguir não encontrado");
             return PACKET_DATA_FOLLOW_ERROR_T;
         } else {
+            pthread_mutex_lock(&(user_followed->mutex_follows));
             for (int i = 0; i < user_followed->follows->size(); i++) {
                 if (user_followed->follows->at(i).compare(my_username) == 0) {
+                    pthread_mutex_unlock(&(user_followed->mutex_follows));
+
                     strcpy(message, "Você já segue esse usuário!");
                     return PACKET_DATA_FOLLOW_ERROR_T;
                 }
             }
             user_followed->follows->push_back(my_username);
+            pthread_mutex_unlock(&(user_followed->mutex_follows));
+
             write_users(server_users, server_users_size);
             strcpy(message, "Usuário seguido com sucesso!");
             return PACKET_DATA_FOLLOW_OK_T;
@@ -161,14 +166,19 @@ int unfollow(const char *my_username, const char *followed, char *message) {
             strcpy(message, "Usuário para deixar de seguir não encontrado");
             return PACKET_DATA_UNFOLLOW_ERROR_T;
         } else {
+            pthread_mutex_lock(&(user_followed->mutex_follows));
             for (int i = 0; i < user_followed->follows->size(); i++) {
                 if (user_followed->follows->at(i).compare(my_username) == 0) {
                     user_followed->follows->erase(user_followed->follows->begin() + i);
+                    pthread_mutex_unlock(&(user_followed->mutex_follows));
+
                     write_users(server_users, server_users_size);
                     strcpy(message, "Usuário não será mais seguido por você!");
                     return PACKET_DATA_UNFOLLOW_OK_T;
                 }
             }
+            pthread_mutex_unlock(&(user_followed->mutex_follows));
+
             strcpy(message, "Você já não segue esse usuário");
             return PACKET_DATA_UNFOLLOW_ERROR_T;
         }

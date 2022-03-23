@@ -7,7 +7,6 @@
 #include <netinet/in.h>
 
 #include "stdint.h"
-#include "constants.h"
 
 // Tipos de comandos que o usuário/server pode enviar
 // [0, 50) -> mensagem do user
@@ -74,6 +73,7 @@ typedef struct __user
     vector<user_address*>* addresses; // endereços das sessões atuais
     vector<uint16_t>* addr_seqn;      // proximos numeros de sequencia do endereço de mesmo indice
     pthread_mutex_t mutex_addr;       // mutex usado para alteração concorrente dos endereços e seqn
+    pthread_mutex_t mutex_follows;    // mutex usado para alteração concorrente dos follows
 } user, *user_p;
 
 typedef bool (*send_notif_callback_t)(uint16_t type, notification *payload, const user_address *cliaddr, const uint16_t seqn);

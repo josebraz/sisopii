@@ -27,6 +27,9 @@ timespec cond_timeout;
 pthread_cond_t cond_wait_response;
 pthread_mutex_t mutex_response;
 
+void *client_message_receiver(void *arg);
+
+// inicia as variáveis de condição e os mutex
 void init_sync_comm() {
     int ret;
     ret = pthread_cond_init(&cond_wait_response, NULL);
@@ -45,9 +48,13 @@ void init_sync_comm() {
 packet *wait_response(uint16_t seqn) {
     packet *response = NULL;
     pthread_mutex_lock(&mutex_response);
+
     cond_timeout.tv_sec = time(NULL) + 2;
     cond_timeout.tv_nsec = 0;
     wait_seqn = seqn;
+
+    // Espera até que o servidor envie uma mensagem com o mesmo seqn da
+    // mensagem que o cliente enviou, ou pode dar timeout depois de 2 segundos
     while (last_message_received == NULL || wait_seqn > last_message_received->seqn) {
         int ret = pthread_cond_timedwait(&cond_wait_response, &mutex_response, &cond_timeout);
         if (ret == 0) {
@@ -63,13 +70,19 @@ packet *wait_response(uint16_t seqn) {
 
 void signal_response(packet *received_message) {
     pthread_mutex_lock(&mutex_response);
+
+    // Se já tinha uma mensagem recebida, precisamos liberar a memória
     if (last_message_received != NULL) {
         free_packet(last_message_received);
     }
     copy_packet(&last_message_received, received_message);
+
+    // Avisa a variável de condição que estava esperando essa resposta
+    // do servidor, liberando o bloqueio da função de sendo
     if (last_message_received->seqn >= wait_seqn) {
         pthread_cond_signal(&cond_wait_response);
     }
+
     pthread_mutex_unlock(&mutex_response);
 }
 

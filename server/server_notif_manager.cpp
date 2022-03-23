@@ -27,6 +27,8 @@ pthread_mutex_t mutex_send;
 
 send_notif_callback_t send_notif_callback;
 
+void *consumer_notification(void *arg);
+
 void server_sig_handler(sig_atomic_t sig) {
     // manda uma mensagem para todos os clientes conectados deslogando eles
     for (int i = 0; i < server_users_size; i++) {
@@ -122,6 +124,7 @@ void *consumer_notification(void *arg) {
         notification *current_notif = pending_notifications.at(notif_index);
         user_p author = find_user(current_notif->author);
 
+        pthread_mutex_lock(&(author->mutex_follows));
         for (int i = 0; current_notif->pending != 0 && i < author->follows->size(); i++) {
             user_p user_follow = find_user(author->follows->at(i).c_str());
             
@@ -138,6 +141,7 @@ void *consumer_notification(void *arg) {
                 }
             }
         }
+        pthread_mutex_unlock(&(author->mutex_follows));
 
         // caso não haja mais nenhum usuário que precise receber essa
         // notificação, ela é eliminada das notificações pendentes

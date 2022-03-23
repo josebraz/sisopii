@@ -5,10 +5,6 @@
 #include "session_manager.hpp"
 #include "../constants.h"
 
-#define NC "\e[0m"
-#define RED "\e[0;31m"
-#define GRN "\e[0;32m"
-
 
 /*
 inicia um processo servidor

@@ -9,12 +9,6 @@
 #include "../logs.hpp"
 #include "client_comm_manager.hpp"
 
-#define NC "\e[0m"
-#define RED "\e[0;31m"
-#define GRN "\e[0;32m"
-#define CYN "\e[0;36m"
-#define REDB "\e[41m"
-
 char *my_user_g;
 
 void presentation_sig_handler(sig_atomic_t sig) {
