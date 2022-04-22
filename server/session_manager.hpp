@@ -29,14 +29,6 @@ void finalize_session_manager();
 user_p find_user(const char *username);
 
 /**
- * Encontra um usuário pelo endereço dele
- * 
- * @param address 
- * @return user_p 
- */
-user_p find_user_by_address(const user_address *address);
-
-/**
  * Encontra o indice do endereço do usuário
  * 
  * @param local_user 
@@ -53,7 +45,7 @@ int index_of_address(const user_p local_user, const user_address *address);
  * @param message mensagem a ser enviado para o usuário como resposta
  * @return int Tipo da mensagem que vai retornar como resposta
  */
-int login(const char *username, const user_address *address, char *message);
+int login(const char *username, const user_address *address, char *message, session_addr **session, user_p *user_logged);
 
 /**
  * Finaliza a sessão do usuário no device address
@@ -63,7 +55,7 @@ int login(const char *username, const user_address *address, char *message);
  * @param message mensagem a ser enviado para o usuário como resposta
  * @return int Tipo da mensagem que vai retornar como resposta
  */
-int logout(const char *username, const user_address *address, char *message);
+int logout(const user_p local_user, const user_address *address, char *message);
 
 /**
  * my_username começa a seguir o followed

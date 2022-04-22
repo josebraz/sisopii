@@ -23,6 +23,7 @@ int client_sockfd;
 uint16_t client_next_seq_n = 1, wait_seqn = 0;
 packet *last_message_received = NULL;
 
+pthread_t receiver_thread;
 timespec cond_timeout;
 pthread_cond_t cond_wait_response;
 pthread_mutex_t mutex_response;
@@ -79,6 +80,7 @@ void signal_response(packet *received_message) {
 
     // Avisa a variável de condição que estava esperando essa resposta
     // do servidor, liberando o bloqueio da função de sendo
+    printf("signal_response wait %d received %d\n", wait_seqn, last_message_received->seqn);
     if (last_message_received->seqn >= wait_seqn) {
         pthread_cond_signal(&cond_wait_response);
     }
@@ -88,9 +90,7 @@ void signal_response(packet *received_message) {
 
 pthread_t start_client(char *server_addr, int port)
 {
-    struct hostent *server;
-
-    server = gethostbyname(server_addr);
+    struct hostent *server = gethostbyname(server_addr);
 	if (server == NULL) 
     {
         perror("ERROR, no such host\n");
@@ -110,9 +110,22 @@ pthread_t start_client(char *server_addr, int port)
     servaddr.sin_addr = *((struct in_addr *)server->h_addr);
     bzero(&(servaddr.sin_zero), 8);  
 
-    pthread_t receiver_thread;
     pthread_create(&receiver_thread, NULL, client_message_receiver, NULL);
     return receiver_thread;
+}
+
+void change_server_address(char *new_address, int new_port) {
+    struct hostent *server = gethostbyname(new_address);
+    if (server == NULL) 
+    {
+        perror("ERROR, no such host\n");
+        exit(EXIT_FAILURE);
+    }
+    
+    servaddr.sin_port = htons(new_port);
+    // servaddr.sin_addr = *((struct in_addr *)server->h_addr);
+
+    printf("NOVO servidor port: %d\n", new_port);
 }
 
 void *client_message_receiver(void *arg)
@@ -121,6 +134,14 @@ void *client_message_receiver(void *arg)
     packet *message;
     notification* notif;
     int n, len;
+
+    struct sockaddr_in clientaddr;
+    if (getsockname(client_sockfd, (struct sockaddr *) &clientaddr, (socklen_t *) &len) == -1) {
+        perror("getsockname");
+        exit(EXIT_FAILURE);
+    }
+
+    printf("start client receiver on port %d\n", ntohs(clientaddr.sin_port));
 
     while (true)
     {
@@ -131,6 +152,8 @@ void *client_message_receiver(void *arg)
             MSG_WAITALL,
             (struct sockaddr *)&servaddr,
             (socklen_t *) &len);
+
+        printf("recvfrom: %d\n", ntohs(servaddr.sin_port));
 
         if (n < 0) {
             perror("Client receiver error");
@@ -155,6 +178,13 @@ void *client_message_receiver(void *arg)
                     on_new_notification(notif);
                 }
                 free_notification(notif);
+                break;
+            case PACKET_CMD_NEW_SERVER_T:
+                char new_address[200];
+                int new_port;
+                
+                unmarshalling_new_address(new_address, &new_port, message->payload);
+                change_server_address(new_address, new_port);
                 break;
             case PACKET_CMD_END_SERVER:
                 printf("Servidor finalizado...\n");
@@ -192,6 +222,7 @@ packet *client_send_message(uint16_t type, char *payload)
 
         size_t message_size = marshalling_packet(&message, &buffer);
 
+        printf("sendto: %d\n", ntohs(servaddr.sin_port));
         ssize_t size = sendto(
             client_sockfd,
             (const void *) buffer,

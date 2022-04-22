@@ -102,11 +102,10 @@ bool send_to_all_addresses(const uint16_t type, const user_p user_follow, notifi
     bool send_success = false;
     pthread_mutex_lock(&(user_follow->mutex_addr));
     for (int i = 0; i < user_follow->addresses->size(); i++) {
-        user_address *addr = user_follow->addresses->at(i);
-        uint16_t next_seqn = user_follow->addr_seqn->at(i);
-        bool current_success = send_notif_callback(type, message, addr, next_seqn);
+        session_addr *addr = user_follow->addresses->at(i);
+        bool current_success = send_notif_callback(type, message, addr);
         if (current_success) {
-            user_follow->addr_seqn->at(i) = next_seqn + 1;
+            addr->seqn += 1;
         }
         send_success = current_success || send_success;
     }

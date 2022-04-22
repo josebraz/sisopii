@@ -11,6 +11,10 @@ size_t marshalling_notification(const notification *message, char **buffer);
 
 void unmarshalling_notification(notification **message, const char *buffer);
 
+size_t marshalling_new_address(int address_length, const char *address, int new_port, char **buffer);
+
+void unmarshalling_new_address(char *address, int *new_port, const char *buffer);
+
 void print_packet(const packet *message);
 
 void print_notification(const notification *message);

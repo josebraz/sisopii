@@ -12,7 +12,7 @@
  * @param port usada para receber os dados
  * @return pthread_t nova thread criada para escutar o socket
  */
-pthread_t start_server(int port);
+void start_server_entry_point(int port);
 
 /**
  * Envia uma mensagem genérica para o cliaddr.
@@ -26,7 +26,7 @@ pthread_t start_server(int port);
  * @return true Caso consiga enviar com sucesso
  * @return false Deu algum erro no envio
  */
-bool server_send_message(uint16_t type, size_t payload_size, char *payload, const user_address *cliaddr, const uint16_t seqn);
+bool server_send_message(uint16_t type, size_t payload_size, char *payload, const session_addr *address);
 
 /**
  * Envia uma mensagem de notificação para o cliaddr.
@@ -39,6 +39,6 @@ bool server_send_message(uint16_t type, size_t payload_size, char *payload, cons
  * @return true Caso consiga enviar com sucesso
  * @return false Deu algum erro no envio
  */
-bool server_send_notif(uint16_t type, notification *payload, const user_address *cliaddr, const uint16_t seqn);
+bool server_send_notif(uint16_t type, notification *payload, const session_addr *address);
 
 #endif

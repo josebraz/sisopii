@@ -18,8 +18,9 @@
 #define PACKET_CMD_UNFOLLOW_T 4
 #define PACKET_CMD_NEW_NOTIFY_T 5 // quando o client envia uma nova notificação
 #define PACKET_CMD_ECHO_T 6
-#define PACKET_CMD_NOTIFY_T 50    // quando o server envia uma notificação
-#define PACKET_CMD_END_SERVER 99  // quando o servidor está prestes a morrer
+#define PACKET_CMD_NOTIFY_T 50     // quando o server envia uma notificação
+#define PACKET_CMD_NEW_SERVER_T 51 // quando o server informa uma nova instancia dele
+#define PACKET_CMD_END_SERVER 99   // quando o servidor está prestes a morrer
 
 // Tipos de dados que o usuário pode receber com status OK
 #define PACKET_DATA_NOTIFICATION_T 100
@@ -64,18 +65,24 @@ typedef struct __notification
 
 typedef sockaddr_in user_address;
 
+typedef struct __session_addr {
+    uint16_t seqn;
+    user_address client_address; 
+    int server_sockfd;
+    pthread_t server_thread;
+} session_addr;
+
 typedef struct __user
 {
     string username;
     vector<string>* follows;          // username de quem segue esse usuário
     // Começa dados efemeros (que não são persistidos)
     vector<uint32_t>* pending_msg;    // id das notificações que falta receber
-    vector<user_address*>* addresses; // endereços das sessões atuais
-    vector<uint16_t>* addr_seqn;      // proximos numeros de sequencia do endereço de mesmo indice
-    pthread_mutex_t mutex_addr;       // mutex usado para alteração concorrente dos endereços e seqn
+    vector<session_addr*>* addresses; // endereços das sessões atuais
+    pthread_mutex_t mutex_addr;       // mutex usado para alteração concorrente dos endereços
     pthread_mutex_t mutex_follows;    // mutex usado para alteração concorrente dos follows
 } user, *user_p;
 
-typedef bool (*send_notif_callback_t)(uint16_t type, notification *payload, const user_address *cliaddr, const uint16_t seqn);
+typedef bool (*send_notif_callback_t)(uint16_t type, notification *payload, const session_addr *address);
 
 #endif

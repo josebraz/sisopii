@@ -47,8 +47,7 @@ int read_users(user_p *users)
         user_p read_user = new user();
         read_user->username = username;
         read_user->follows = follows;
-        read_user->addresses = new vector<user_address*>();
-        read_user->addr_seqn = new vector<uint16_t>();
+        read_user->addresses = new vector<session_addr*>();
         read_user->pending_msg = new vector<uint32_t>();
         pthread_mutex_init(&(read_user->mutex_addr), NULL);
         pthread_mutex_init(&(read_user->mutex_follows), NULL);

@@ -20,12 +20,7 @@ int main()
 
     // alocamos threads para cuidar do funcionamento da permanencia do servidor online e para o gerenciamento de troca de notificacoes
     pthread_t notif_thread = start_server_notif_mng(&server_send_notif);
-    pthread_t server_thread = start_server(SERVER_PORT);
-
-    printf(GRN "Server iniciado com sucesso!" NC " \n");
-
-    pthread_join(server_thread, NULL);
-    pthread_join(notif_thread, NULL);
+    start_server_entry_point(SERVER_PORT);
 
     finalize_session_manager();
 

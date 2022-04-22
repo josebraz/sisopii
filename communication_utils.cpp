@@ -45,6 +45,26 @@ size_t marshalling_notification(const notification *message, char **buffer) {
     return message_size;
 }
 
+size_t marshalling_new_address(int address_length, const char *address, int new_port, char **buffer) {
+    u_int16_t port16 = (uint16_t) new_port;
+    u_int16_t len16 = (uint16_t) address_length;
+
+    size_t message_size = sizeof(uint16_t) + sizeof(uint16_t) + address_length + 1;
+    size_t buffer_index = 0;
+    *buffer = (char *) calloc(message_size, 1);
+
+    memmove(*buffer + buffer_index, &port16, sizeof(uint16_t));
+    buffer_index += sizeof(uint16_t);
+
+    memmove(*buffer + buffer_index, &len16, sizeof(uint16_t));
+    buffer_index += sizeof(uint16_t);
+
+    memmove(*buffer + buffer_index, address, address_length + 1);
+    buffer_index += address_length + 1;
+
+    return message_size;
+}
+
 void unmarshalling_packet(packet **message, const char *buffer) {
     *message = (packet *) calloc(sizeof(packet), 1);
     size_t buffer_index = 0;
@@ -91,6 +111,20 @@ void unmarshalling_notification(notification **message, const char *buffer) {
     (*message)->message = (char *) calloc((*message)->length + 1, 1);
     memmove((*message)->message, buffer + buffer_index, (*message)->length + 1);
     buffer_index += (*message)->length + 1;
+}
+
+void unmarshalling_new_address(char *address, int *new_port, const char *buffer) {
+    int buffer_index = 0; 
+    u_int16_t address_length;
+
+    *new_port = (int) *((uint16_t*)(buffer + buffer_index));
+    buffer_index += sizeof(uint16_t);
+
+    address_length = *((uint16_t*)(buffer + buffer_index));
+    buffer_index += sizeof(uint16_t);
+
+    memmove(address, buffer + buffer_index, address_length + 1);
+    buffer_index += address_length + 1;
 }
 
 void print_packet(const packet *message) {
