@@ -39,6 +39,13 @@
 #define PACKET_DATA_UNFOLLOW_ERROR_T 204
 #define PACKET_DATA_UNAUTHENTICATED_T 250
 
+#define PACKET_RESISTENCE_MSG_T 300
+#define PACKET_CMD_POKE_COORD_T 301
+
+#define PACKET_RESISTENCE_MSG_RESULT_T 350
+
+
+
 #define USER_MAX_SESSIONS 2
 
 using namespace std;
@@ -62,6 +69,12 @@ typedef struct __notification
     char *author;        // Username author da mensagem
     char *message;       // Mensagem
 } notification;
+
+typedef struct __resistence_msg {
+    uint16_t type;
+    int sender;
+    int destination;
+} resistence_msg;
 
 typedef sockaddr_in user_address;
 

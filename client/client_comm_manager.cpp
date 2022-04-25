@@ -24,8 +24,7 @@ uint16_t client_next_seq_n = 1, wait_seqn = 0;
 packet *last_message_received = NULL;
 
 pthread_t receiver_thread;
-timespec cond_timeout;
-pthread_cond_t cond_wait_response;
+pthread_cond_t receiver_cond, wait_cond;
 pthread_mutex_t mutex_response;
 
 void *client_message_receiver(void *arg);
@@ -33,7 +32,13 @@ void *client_message_receiver(void *arg);
 // inicia as variáveis de condição e os mutex
 void init_sync_comm() {
     int ret;
-    ret = pthread_cond_init(&cond_wait_response, NULL);
+    ret = pthread_cond_init(&receiver_cond, NULL);
+    if (ret != 0) {
+        perror("cond init failed");
+        exit(EXIT_FAILURE);
+    }
+
+    ret = pthread_cond_init(&wait_cond, NULL);
     if (ret != 0) {
         perror("cond init failed");
         exit(EXIT_FAILURE);
@@ -44,48 +49,6 @@ void init_sync_comm() {
         perror("mutex init failed");
         exit(EXIT_FAILURE);
     }
-}
-
-packet *wait_response(uint16_t seqn) {
-    packet *response = NULL;
-    pthread_mutex_lock(&mutex_response);
-
-    cond_timeout.tv_sec = time(NULL) + 2;
-    cond_timeout.tv_nsec = 0;
-    wait_seqn = seqn;
-
-    // Espera até que o servidor envie uma mensagem com o mesmo seqn da
-    // mensagem que o cliente enviou, ou pode dar timeout depois de 2 segundos
-    while (last_message_received == NULL || wait_seqn > last_message_received->seqn) {
-        int ret = pthread_cond_timedwait(&cond_wait_response, &mutex_response, &cond_timeout);
-        if (ret == 0) {
-            response = last_message_received;
-        } else {
-            response = NULL;
-            break;
-        }
-    }
-    pthread_mutex_unlock(&mutex_response);
-    return response;
-}
-
-void signal_response(packet *received_message) {
-    pthread_mutex_lock(&mutex_response);
-
-    // Se já tinha uma mensagem recebida, precisamos liberar a memória
-    if (last_message_received != NULL) {
-        free_packet(last_message_received);
-    }
-    copy_packet(&last_message_received, received_message);
-
-    // Avisa a variável de condição que estava esperando essa resposta
-    // do servidor, liberando o bloqueio da função de sendo
-    printf("signal_response wait %d received %d\n", wait_seqn, last_message_received->seqn);
-    if (last_message_received->seqn >= wait_seqn) {
-        pthread_cond_signal(&cond_wait_response);
-    }
-
-    pthread_mutex_unlock(&mutex_response);
 }
 
 pthread_t start_client(char *server_addr, int port)
@@ -168,7 +131,7 @@ void *client_message_receiver(void *arg)
         }
 
         if (is_response(message->type)) {
-            signal_response(message);
+            signal_response(message, &mutex_response, &receiver_cond, &wait_cond, &wait_seqn, &last_message_received);
         } else { // é uma notificação enviada pelo server
             switch (message->type)
             {
@@ -236,7 +199,7 @@ packet *client_send_message(uint16_t type, char *payload)
             log_error("Mensagem não enviada");
         } else {
             free(buffer);
-            return wait_response(message.seqn);
+            return wait_response(message.seqn, &mutex_response, &receiver_cond, &wait_cond, &wait_seqn, &last_message_received);
         }
     }
     return NULL;

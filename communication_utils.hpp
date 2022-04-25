@@ -15,6 +15,30 @@ size_t marshalling_new_address(int address_length, const char *address, int new_
 
 void unmarshalling_new_address(char *address, int *new_port, const char *buffer);
 
+size_t marshalling_resistence_msg(const resistence_msg *message, char **buffer);
+
+void unmarshalling_resistence_msg(resistence_msg **message, const char *buffer);
+
+packet *wait_response(
+    uint16_t seqn, 
+    pthread_mutex_t *mutex, 
+    pthread_cond_t *receiver_cond, 
+    pthread_cond_t *wait_cond, 
+    uint16_t *wait_seqn, 
+    packet **last_message_received
+);
+
+void signal_response(
+    packet *received_message, 
+    pthread_mutex_t *mutex, 
+    pthread_cond_t *receiver_cond, 
+    pthread_cond_t *wait_cond, 
+    uint16_t *wait_seqn, 
+    packet **last_message_received
+);
+
+void print_resistence(const resistence_msg *message);
+
 void print_packet(const packet *message);
 
 void print_notification(const notification *message);

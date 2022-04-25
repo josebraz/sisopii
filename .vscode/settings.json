@@ -51,5 +51,6 @@
     },
     "files.exclude": {
         "*.o": true
-    }
+    },
+    "C_Cpp.errorSquiggles": "Disabled"
 }

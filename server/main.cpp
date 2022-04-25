@@ -1,5 +1,6 @@
 #include "pthread.h"
 
+#include "resistence.hpp"
 #include "server_comm_manager.hpp"
 #include "server_notif_manager.hpp"
 #include "session_manager.hpp"
@@ -13,6 +14,10 @@ não recebe parametros alem do padrao que representa o caminho do executavel
 int main()
 {
     printf("Iniciando o server...\n");
+
+    // Ficamos bloqueados nessa função até que a gente seja o 
+    // coordinator e possamos começar nosso serviço
+    start_resistence_server();
 
     // inicia uma secao lendo o arquivo binario onde estao guardados os historicos dos usuarios,
     // permitindo assim que o server tenha uma persistencia na interacao dos clientes
