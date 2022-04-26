@@ -39,11 +39,15 @@
 #define PACKET_DATA_UNFOLLOW_ERROR_T 204
 #define PACKET_DATA_UNAUTHENTICATED_T 250
 
+// Mensagens de request para a resistencia
 #define PACKET_RESISTENCE_MSG_T 300
 #define PACKET_CMD_POKE_COORD_T 301
+#define PACKET_CMD_ELECTION_T 302
+#define PACKET_CMD_ELECTION_ANWER_T 303
+#define PACKET_CMD_COORD_AD_T 304
 
+// Mensagens de result para a resistencia
 #define PACKET_RESISTENCE_MSG_RESULT_T 350
-
 
 
 #define USER_MAX_SESSIONS 2
