@@ -3,6 +3,8 @@
 
 #include "types.hpp"
 
+#define NO_WAIT_SEQN 65535 // número de sequencia pra representar que nao estamos esperando nada
+
 size_t marshalling_packet(const packet *message, char **buffer);
 
 void unmarshalling_packet(packet **message, const char *buffer);

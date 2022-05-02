@@ -296,8 +296,6 @@ bool server_send_message(uint16_t type, size_t payload_size, char *payload, cons
             payload
         };
 
-        printf("sendto: port %d ID %d\n", ntohs(address->client_address.sin_port), address->server_sockfd);
-
         size_t message_size = marshalling_packet(&message, &buffer);
 
         ssize_t size = sendto(

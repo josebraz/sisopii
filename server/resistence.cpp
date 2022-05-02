@@ -22,7 +22,7 @@ int is_coordinator = 0;
 
 int coord_pid = -1;
 int broadcast_fd = -1;
-uint16_t next_seq_n = 0, wait_seqn = 0;
+uint16_t next_seq_n = 0, wait_seqn = NO_WAIT_SEQN;
 
 packet *last_message_received = NULL;
 pthread_t receiver_thread;
@@ -245,6 +245,7 @@ void start_coordinator_inspection() {
                 init_election();
                 consecutive_failures = 0;
             } else {
+                printf("COORD Ignorou, vamos dar mais uma chance!\n");
                 consecutive_failures++;
             }
         } else {
@@ -330,7 +331,7 @@ int send_broadcast(resistence_msg *resistence, uint16_t type, uint16_t seqn) {
 
     size_t message_size = marshalling_packet(&message, &buffer);
 
-    printf("sendto: %d\n", ntohs(servaddr.sin_port));
+    // printf("sendto: %d\n", ntohs(servaddr.sin_port));
     ssize_t size = sendto(
         broadcast_fd,
         (const void *) buffer,
@@ -406,7 +407,7 @@ resistence_msg *poke_coordinator(int coord) {
     };
 
     printf("POKE coordinator\n");
-    print_resistence(&resistence);
+    // print_resistence(&resistence);
 
     return send_broadcast_and_wait(&resistence, PACKET_RESISTENCE_MSG_T, next_seq_n++);
 }

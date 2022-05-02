@@ -20,7 +20,7 @@
 struct sockaddr_in servaddr;
 int client_sockfd;
 
-uint16_t client_next_seq_n = 1, wait_seqn = 0;
+uint16_t client_next_seq_n = 1, wait_seqn = NO_WAIT_SEQN;
 packet *last_message_received = NULL;
 
 pthread_t receiver_thread;
@@ -87,8 +87,6 @@ void change_server_address(char *new_address, int new_port) {
     
     servaddr.sin_port = htons(new_port);
     // servaddr.sin_addr = *((struct in_addr *)server->h_addr);
-
-    printf("NOVO servidor port: %d\n", new_port);
 }
 
 void *client_message_receiver(void *arg)
@@ -104,8 +102,6 @@ void *client_message_receiver(void *arg)
         exit(EXIT_FAILURE);
     }
 
-    printf("start client receiver on port %d\n", ntohs(clientaddr.sin_port));
-
     while (true)
     {
         n = recvfrom(
@@ -115,8 +111,6 @@ void *client_message_receiver(void *arg)
             MSG_WAITALL,
             (struct sockaddr *)&servaddr,
             (socklen_t *) &len);
-
-        printf("recvfrom: %d\n", ntohs(servaddr.sin_port));
 
         if (n < 0) {
             perror("Client receiver error");
@@ -185,7 +179,6 @@ packet *client_send_message(uint16_t type, char *payload)
 
         size_t message_size = marshalling_packet(&message, &buffer);
 
-        printf("sendto: %d\n", ntohs(servaddr.sin_port));
         ssize_t size = sendto(
             client_sockfd,
             (const void *) buffer,

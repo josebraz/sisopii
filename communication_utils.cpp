@@ -170,6 +170,11 @@ packet *wait_response(
     timespec cond_timeout;
     cond_timeout.tv_sec = time(NULL) + 2;
     cond_timeout.tv_nsec = 0;
+
+    // espera se já tem gente esperando
+    while (*wait_seqn != NO_WAIT_SEQN) {
+        pthread_cond_wait(receiver_cond, mutex);
+    }
     *wait_seqn = seqn;
 
     // informa que estamos escutando
@@ -186,6 +191,7 @@ packet *wait_response(
             break;
         }
     }
+    *wait_seqn = NO_WAIT_SEQN;
     pthread_mutex_unlock(mutex);
     return response;
 }
@@ -216,7 +222,7 @@ void signal_response(
     // Avisa a variável de condição que estava esperando essa resposta
     // do servidor, liberando o bloqueio da função de sendo
     if ((*last_message_received)->seqn == *wait_seqn) {
-        printf("signal_response wait %d received %d\n", *wait_seqn, (*last_message_received)->seqn);
+        // printf("signal_response wait %d received %d\n", *wait_seqn, (*last_message_received)->seqn);
         pthread_cond_signal(receiver_cond);
     }
 
